@@ -1,0 +1,273 @@
+using System.ComponentModel.DataAnnotations;
+namespace CoffeManager.Models.User.Base
+{
+    internal abstract class User
+    {
+        #region Operation Data
+            public string _role { get; set; } = string.Empty;
+            /// <summary>
+            /// Contains the subscription loaded by the server for the account owner.
+            /// Registration and profile requests cannot assign this information.
+            /// </summary>
+            internal UserSubscriptionData Subscription { get; private set; }
+        #endregion Operation Data
+        #region Obsolete Arrays
+            /// <summary>
+            /// Gets the array for initializing the user roles in the system.
+            /// This array is used only one time during initialization.
+            /// After controlled initialization, this source is never used again; roles are read from persistent storage.
+            /// </summary>
+            [Obsolete("This array is used only one time during initialization.")]
+            private readonly string[] UserRoles = new string[3]
+            {
+                "Admin",
+                "Manager",
+                "Employee"
+            };
+            /// <summary>
+            /// Contains the three service tier codes used once during initial database setup.
+            /// Prices and limits require provider configuration before activation.
+            /// After controlled initialization, this source is never used again.
+            /// </summary>
+            [Obsolete("This array is used only once during initialization.")]
+            private readonly string[] DefaultSubscriptionTiers =
+            {
+                "EssentialControl",
+                "ProfessionalManagement",
+                "AdvancedControl"
+            };
+            /// <summary>
+            /// Contains the initial owner subscription status codes.
+            /// This source is used only during controlled initialization and is not used again after setup.
+            /// </summary>
+            [Obsolete("Initialization only. Do not use after controlled initial setup.")]
+            private readonly string[] DefaultSubscriptionStatuses =
+            {
+                "Pending",
+                "Active",
+                "Suspended",
+                "Expired"
+            };
+        #endregion Obsolete Arrays
+        #region Structs
+            /// <summary>
+            /// Contains the initial information provided when registering an account.
+            /// </summary>
+            internal struct UserDataFirstLogin
+            {
+                public Guid UserId { get; set; }
+                [Required, StringLength(80)]
+                public string UserName { get; set; }
+                [Required, StringLength(160)]
+                public string UserLastName { get; set; }
+                [Required, StringLength(254), EmailAddress]
+                public string UserEmail { get; set; }
+                [Required, StringLength(128)]
+                public string UserPassword { get; set; }
+                [Required, StringLength(40)]
+                public string UserRole { get; set; }
+            }
+            /// <summary>
+            /// Contains the information related to the user's profile, such as display name,
+            /// description, avatar, contact information, and identification numbers.
+            /// </summary>
+            internal struct UserProfileData
+            {
+                [StringLength(100)]
+                public string? DisplayName { get; set; }
+                [StringLength(1000)]
+                public string? Description { get; set; }
+                public Guid? AvatarId { get; set; }
+                public Guid? CoverImageId { get; set; }
+                [StringLength(30)]
+                public string? PhoneNumber { get; set; }
+                [StringLength(30)]
+                public string? AlternatePhoneNumber { get; set; }
+                public DateOnly? DateOfBirth { get; set; }
+                [StringLength(250)]
+                public string? Address { get; set; }
+                [StringLength(100)]
+                public string? City { get; set; }
+                [StringLength(100)]
+                public string? State { get; set; }
+                [StringLength(10)]
+                public string? PostalCode { get; set; }
+                [StringLength(13)]
+                public string? TaxIdentificationNumber { get; set; }
+                [StringLength(18)]
+                public string? NationalIdentificationNumber { get; set; }
+            }
+            /// <summary>
+            /// Contains the contracted subscription returned by a server-side query.
+            /// Limits belong to UserId and apply across the owner's authorized businesses.
+            /// Null limits indicate pending configuration, not unlimited capacity.
+            /// </summary>
+            internal struct UserSubscriptionData
+            {
+                public Guid SubscriptionId { get; set; }
+                public Guid UserId { get; set; }
+                [Required, StringLength(80)]
+                public string SubscriptionName { get; set; }
+                /// <summary>References optional special conditions, such as an agreed offer; not the service tier.</summary>
+                public Guid? PlanId { get; set; }
+                [StringLength(50)]
+                public string? PlanCode { get; set; }
+                [StringLength(100)]
+                public string? PlanName { get; set; }
+                [Required, StringLength(40)]
+                public string StatusCode { get; set; }
+                public decimal MonthlyPrice { get; set; }
+                [Required, StringLength(3)]
+                public string CurrencyCode { get; set; }
+                public int? MaxBranches { get; set; }
+                public int? MaxEmployees { get; set; }
+                public long? StorageLimitBytes { get; set; }
+                public DateTimeOffset StartsAt { get; set; }
+                public DateTimeOffset? EndsAt { get; set; }
+            }
+        #endregion Structs
+        #region Task Database Initialization
+            /// <summary>
+            /// Seeds the default roles once during controlled setup; does not execute on every login.
+            /// </summary>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            private Task InitializeDefaultUserRolesAsync(CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("Default user roles initialization has not been implemented.");
+            }
+            /// <summary>
+            /// Creates the account schema, including nullable profile columns, during controlled setup.
+            /// </summary>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            private Task CreateUserAccountTableAsync(CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("User registration table initialization has not been implemented.");
+            }
+            /// <summary>
+            /// Creates the optional special-condition plan catalog; this is distinct from the service tier.
+            /// </summary>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            private Task CreateSubscriptionPlanTableAsync(CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("Subscription plan table creation has not been implemented.");
+            }
+            /// <summary>
+            /// Creates the owner subscription table with its contracted terms.
+            /// </summary>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            private Task CreateUserSubscriptionTableAsync(CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("Owner subscription table creation has not been implemented.");
+            }
+            /// <summary>
+            /// Seeds service tiers once without activating a customer subscription or special-condition plan.
+            /// </summary>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            private Task InitializeDefaultSubscriptionTiersAsync(CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("Default subscription tier initialization has not been implemented.");
+            }
+            /// <summary>
+            /// Creates the catalog for the three service tiers.
+            /// </summary>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            private Task CreateSubscriptionTierTableAsync(CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("CreateSubscriptionTierTableAsync has not been implemented.");
+            }
+            /// <summary>
+            /// Creates the owner subscription status catalog.
+            /// </summary>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            private Task CreateSubscriptionStatusTableAsync(CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("CreateSubscriptionStatusTableAsync has not been implemented.");
+            }
+            /// <summary>
+            /// Seeds subscription statuses once during controlled setup.
+            /// </summary>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            private Task InitializeDefaultSubscriptionStatusesAsync(CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("InitializeDefaultSubscriptionStatusesAsync has not been implemented.");
+            }
+        #endregion Task Database Initialization
+        #region Task Account Operations
+            /// <summary>
+            /// Registers an authorized account and generates its identifier server-side. Never trusts a supplied UserId or grants permissions solely from a requested role. Passwords must be hashed before persistence.
+            /// </summary>
+            /// <param name="userData">The user data for this operation.</param>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task containing the server-generated identifier.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            internal Task<Guid> RegisterAccountAsync(UserDataFirstLogin userData, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("User account registration has not been implemented.");
+            }
+            /// <summary>
+            /// Adds a role catalog entry. Creating a label does not grant permissions automatically.
+            /// </summary>
+            /// <param name="_role">The role for this operation.</param>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            internal Task AddRoleAsync(string _role, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("Adding user role has not been implemented.");
+            }
+        #endregion Task Account Operations
+        #region Task Profile Operations
+            /// <summary>
+            /// Saves the additional profile information for the first time.
+            /// </summary>
+            /// <param name="profileData">The profile data for this operation.</param>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            internal Task CompleteProfileAsync(UserProfileData profileData, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("Profile completion has not been implemented.");
+            }
+            /// <summary>
+            /// Updates previously saved profile information.
+            /// </summary>
+            /// <param name="profileData">The profile data for this operation.</param>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task representing the asynchronous operation.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            internal Task UpdateProfileAsync(UserProfileData profileData, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("Profile update has not been implemented.");
+            }
+        #endregion Task Profile Operations
+        #region Task Subscription Operations
+            /// <summary>
+            /// Loads contracted terms for an owner account after validating the caller's access. Subscription changes are reserved for provider administration.
+            /// </summary>
+            /// <param name="userId">The user id for this operation.</param>
+            /// <param name="cancellationToken">The token used to cancel the operation.</param>
+            /// <returns>A task containing the authorized user subscription data.</returns>
+            /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+            internal Task<UserSubscriptionData> GetSubscriptionAsync(Guid userId, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException("Subscription query has not been implemented.");
+            }
+        #endregion Task Subscription Operations
+    }
+}

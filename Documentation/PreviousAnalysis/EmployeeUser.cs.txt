@@ -1,0 +1,274 @@
+using System.ComponentModel.DataAnnotations;
+namespace CoffeManager.Models.User.Classes;
+internal abstract class EmployeeUser : Base.User
+{
+    #region Operation Data
+        public string _salaryBasis { get; set; } = string.Empty;
+        public string _employmentStatus { get; set; } = string.Empty;
+    #endregion Operation Data
+    #region Obsolete Arrays
+        /// <summary>
+        /// Contains the salary basis codes used once during initialization.
+        /// Display names in Spanish are configured in the database.
+        /// This source is used only during controlled initialization and is not used again after setup.
+        /// </summary>
+        [Obsolete("This array is used only once during initialization.")]
+        private readonly string[] DefaultSalaryBases =
+        {
+            "Hourly",
+            "Daily",
+            "Weekly",
+            "Biweekly",
+            "Semimonthly",
+            "Monthly"
+        };
+        /// <summary>
+        /// Contains the employment status codes used once during initialization.
+        /// Display names in Spanish are configured in the database.
+        /// This source is used only during controlled initialization and is not used again after setup.
+        /// </summary>
+        [Obsolete("This array is used only once during initialization.")]
+        private readonly string[] DefaultEmploymentStatuses =
+        {
+            "Pending",
+            "Active",
+            "OnLeave",
+            "Suspended",
+            "Ended"
+        };
+    #endregion Obsolete Arrays
+    #region Structs
+        /// <summary>
+        /// Contains only the employee identity submitted at initial registration. The server generates EmployeeId; no login access is granted.
+        /// </summary>
+        internal struct EmployeeRegistrationData
+        {
+            [Required, StringLength(80)]
+            public string FirstName { get; set; }
+            [Required, StringLength(80)]
+            public string PaternalLastName { get; set; }
+            [StringLength(80)]
+            public string? MaternalLastName { get; set; }
+        }
+        /// <summary>
+        /// Contains additional employee information completed after initial creation. Role and account access use dedicated operations.
+        /// </summary>
+        internal struct EmployeeProfileData
+        {
+            [StringLength(254), EmailAddress]
+            public string? Email { get; set; }
+            [StringLength(100)]
+            public string? DisplayName { get; set; }
+            [StringLength(1000)]
+            public string? Description { get; set; }
+            public Guid? AvatarId { get; set; }
+            [StringLength(30)]
+            public string? PhoneNumber { get; set; }
+            [StringLength(30)]
+            public string? AlternatePhoneNumber { get; set; }
+            public DateOnly? DateOfBirth { get; set; }
+            [StringLength(250)]
+            public string? Address { get; set; }
+            [StringLength(100)]
+            public string? City { get; set; }
+            [StringLength(100)]
+            public string? State { get; set; }
+            [StringLength(10)]
+            public string? PostalCode { get; set; }
+            [StringLength(13)]
+            public string? TaxIdentificationNumber { get; set; }
+            [StringLength(18)]
+            public string? NationalIdentificationNumber { get; set; }
+            [Required, StringLength(30)]
+            public string EmployeeNumber { get; set; }
+            public DateOnly HireDate { get; set; }
+            public Guid? EmploymentStatusId { get; set; }
+            public decimal? SalaryAmount { get; set; }
+            public Guid? SalaryBasisId { get; set; }
+        }
+        /// <summary>
+        /// Contains the identified employee and its current profile and server-calculated access. Initial records have no operational access.
+        /// </summary>
+        internal struct EmployeeDetailsData
+        {
+            public Guid EmployeeId { get; set; }
+            public EmployeeRegistrationData Identity { get; set; }
+            public EmployeeProfileData Profile { get; set; }
+            public Guid? RoleId { get; set; }
+            public Guid? UserAccountId { get; set; }
+            public bool CanAccessAdministration { get; set; }
+            public bool CanAccessCheckout { get; set; }
+        }
+        /// <summary>
+        /// Contains an eligible unlinked account within the authorized scope. Owner accounts are excluded.
+        /// </summary>
+        internal struct AvailableAccountData
+        {
+            public Guid UserAccountId { get; set; }
+            [Required, StringLength(100)]
+            public string DisplayName { get; set; }
+            [Required, StringLength(254), EmailAddress]
+            public string Email { get; set; }
+        }
+    #endregion Structs
+    #region Task Database Initialization
+        /// <summary>
+        /// Creates the employee table and its required relationships.
+        /// </summary>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        private Task CreateEmployeeTableAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("Employee table creation has not been implemented.");
+        }
+        /// <summary>
+        /// Creates the salary basis catalog table.
+        /// </summary>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        private Task CreateSalaryBasisTableAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("Salary basis table creation has not been implemented.");
+        }
+        /// <summary>
+        /// Creates the employment status catalog table.
+        /// </summary>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        private Task CreateEmploymentStatusTableAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("Employment status table creation has not been implemented.");
+        }
+        /// <summary>
+        /// Inserts the initial salary bases during initial setup.
+        /// </summary>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        private Task InitializeDefaultSalaryBasesAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("Default salary bases initialization has not been implemented.");
+        }
+        /// <summary>
+        /// Inserts the initial employment statuses during initial setup.
+        /// </summary>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        private Task InitializeDefaultEmploymentStatusesAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("Default employment statuses initialization has not been implemented.");
+        }
+    #endregion Task Database Initialization
+    #region Task Employee Operations
+        /// <summary>
+        /// Creates the minimal employee record and returns its identifier without granting system access. A role requiring access is assigned later through the dedicated account and role operations.
+        /// </summary>
+        /// <param name="employeeData">The employee data for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the server-generated identifier.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<Guid> RegisterEmployeeAsync(EmployeeRegistrationData employeeData, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("Employee registration has not been implemented.");
+        }
+        /// <summary>
+        /// Returns employees visible to the authenticated owner. Account secrets are never returned.
+        /// </summary>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the authorized result collection.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<IReadOnlyList<EmployeeDetailsData>> GetEmployeesAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("GetEmployeesAsync has not been implemented.");
+        }
+        /// <summary>
+        /// Returns authorized employee details.
+        /// </summary>
+        /// <param name="employeeId">The employee id for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the authorized employee details data.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<EmployeeDetailsData> GetEmployeeAsync(Guid employeeId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("GetEmployeeAsync has not been implemented.");
+        }
+        /// <summary>
+        /// Completes or updates additional employee information without changing identity, role or linked account. Employment status changes must also update effective access and revoke affected sessions.
+        /// </summary>
+        /// <param name="employeeId">The employee id for this operation.</param>
+        /// <param name="employeeData">The employee data for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task UpdateEmployeeAsync(Guid employeeId, EmployeeProfileData employeeData, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("UpdateEmployeeAsync has not been implemented.");
+        }
+    #endregion Task Employee Operations
+    #region Task Salary Basis Operations
+        /// <summary>
+        /// Creates a salary basis catalog entry.
+        /// </summary>
+        /// <param name="_salaryBasis">The salary basis for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the server-generated identifier.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<Guid> AddSalaryBasisAsync(string _salaryBasis, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("Salary basis creation has not been implemented.");
+        }
+    #endregion Task Salary Basis Operations
+    #region Task Employment Status Operations
+        /// <summary>
+        /// Creates an employment status catalog entry.
+        /// </summary>
+        /// <param name="_employmentStatus">The employment status for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the server-generated identifier.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<Guid> AddEmploymentStatusAsync(string _employmentStatus, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("Employment status creation has not been implemented.");
+        }
+    #endregion Task Employment Status Operations
+    #region Task Employee Access Operations
+        /// <summary>
+        /// Returns enabled accounts within the authorized scope, excluding owner accounts and accounts already linked to employees.
+        /// </summary>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the authorized result collection.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<IReadOnlyList<AvailableAccountData>> GetAvailableAccountsAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("GetAvailableAccountsAsync has not been implemented.");
+        }
+        /// <summary>
+        /// Links one authorized existing account atomically. An account cannot be linked to multiple employees.
+        /// </summary>
+        /// <param name="employeeId">The employee id for this operation.</param>
+        /// <param name="accountId">The account id for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task LinkAccountAsync(Guid employeeId, Guid accountId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("LinkAccountAsync has not been implemented.");
+        }
+        /// <summary>
+        /// Validates required account access before changing role. Recomputes permissions and revokes affected sessions without deleting credentials or changing salary.
+        /// </summary>
+        /// <param name="employeeId">The employee id for this operation.</param>
+        /// <param name="roleId">The role id for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task ChangeEmployeeRoleAsync(Guid employeeId, Guid roleId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("ChangeEmployeeRoleAsync has not been implemented.");
+        }
+    #endregion Task Employee Access Operations
+}

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CoffeManager.csproj" />
+  <Project Path="CoffeManager.Client.Admin/CoffeManager.Client.Admin.csproj" />
+</Solution>

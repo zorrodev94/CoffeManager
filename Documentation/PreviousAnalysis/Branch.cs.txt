@@ -1,0 +1,123 @@
+using System.ComponentModel.DataAnnotations;
+namespace CoffeManager.Models.Business.Classes;
+internal class Branch
+{
+    #region Structs
+        /// <summary>
+        /// Contains only the initial branch data. The server generates BranchId and CreatedAt and validates subscription capacity.
+        /// </summary>
+        internal struct BranchRegistrationData
+        {
+            public Guid BusinessId { get; set; }
+            [Required, StringLength(120)]
+            public string Name { get; set; }
+        }
+        /// <summary>
+        /// Contains the branch profile completed after registration. Neighborhood means the local neighborhood or colonia. Null optional values clear their stored value.
+        /// </summary>
+        internal struct BranchProfileData
+        {
+            [Required, StringLength(120)]
+            public string Name { get; set; }
+            [StringLength(1000)]
+            public string? Description { get; set; }
+            [StringLength(250)]
+            public string? Address { get; set; }
+            [StringLength(100)]
+            public string? Neighborhood { get; set; }
+            [StringLength(100)]
+            public string? City { get; set; }
+            [StringLength(100)]
+            public string? State { get; set; }
+            [StringLength(10)]
+            public string? PostalCode { get; set; }
+            [StringLength(30)]
+            public string? PhoneNumber { get; set; }
+            [StringLength(254), EmailAddress]
+            public string? Email { get; set; }
+        }
+        /// <summary>
+        /// Contains the branch identity and profile without loading areas, employees or inventory automatically.
+        /// </summary>
+        internal struct BranchDetailsData
+        {
+            public Guid BranchId { get; set; }
+            public Guid BusinessId { get; set; }
+            public DateTimeOffset CreatedAt { get; set; }
+            public BranchProfileData Profile { get; set; }
+        }
+    #endregion Structs
+    #region Task Database Initialization
+        /// <summary>
+        /// Creates the branch schema and business relationship, including nullable profile columns. Financial opening balances require separate movement records.
+        /// </summary>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        private Task CreateBranchTableAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("CreateBranchTableAsync has not been implemented.");
+        }
+    #endregion Task Database Initialization
+    #region Task Branch Operations
+        /// <summary>
+        /// Registers a branch. Authorization, owner subscription capacity and insertion must be checked atomically.
+        /// </summary>
+        /// <param name="branchData">The branch data for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the server-generated identifier.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<Guid> RegisterBranchAsync(BranchRegistrationData branchData, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("RegisterBranchAsync has not been implemented.");
+        }
+        /// <summary>
+        /// Returns an authorized branch.
+        /// </summary>
+        /// <param name="branchId">The branch id for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the authorized branch details data.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<BranchDetailsData> GetBranchAsync(Guid branchId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("GetBranchAsync has not been implemented.");
+        }
+        /// <summary>
+        /// Returns branches belonging to an authorized business.
+        /// </summary>
+        /// <param name="businessId">The business id for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the authorized result collection.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<IReadOnlyList<BranchDetailsData>> GetBranchesAsync(Guid businessId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("GetBranchesAsync has not been implemented.");
+        }
+    #endregion Task Branch Operations
+    #region Task Profile Operations
+        /// <summary>
+        /// Completes the branch profile without creating areas or changing its business.
+        /// </summary>
+        /// <param name="branchId">The branch id for this operation.</param>
+        /// <param name="profileData">The profile data for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task CompleteBranchProfileAsync(Guid branchId, BranchProfileData profileData, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("CompleteBranchProfileAsync has not been implemented.");
+        }
+        /// <summary>
+        /// Updates the branch profile without changing its business or financial balances.
+        /// </summary>
+        /// <param name="branchId">The branch id for this operation.</param>
+        /// <param name="profileData">The profile data for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task UpdateBranchProfileAsync(Guid branchId, BranchProfileData profileData, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("UpdateBranchProfileAsync has not been implemented.");
+        }
+    #endregion Task Profile Operations
+}

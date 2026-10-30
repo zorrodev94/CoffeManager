@@ -1,0 +1,123 @@
+using System.ComponentModel.DataAnnotations;
+namespace CoffeManager.Models.Business.Classes;
+internal class Business
+{
+    #region Obsolete Arrays
+        /// <summary>
+        /// Contains the supported business type used to initialize the configured business. No separate business type identifier is required.
+        /// This source is used only during controlled initialization and is not used again after setup.
+        /// </summary>
+        [Obsolete("Initialization only. Do not use after controlled initial setup.")]
+        private readonly string[] DefaultBusinessTypes =
+        {
+            "Cafeteria"
+        };
+    #endregion Obsolete Arrays
+    #region Structs
+        /// <summary>
+        /// Contains the basic setup information. The server validates ownership and generates BusinessId.
+        /// </summary>
+        internal struct BusinessSetupData
+        {
+            public Guid OwnerUserId { get; set; }
+            [Required, StringLength(120)]
+            public string TradeName { get; set; }
+            [Required, StringLength(40)]
+            public string BusinessType { get; set; }
+        }
+        /// <summary>
+        /// Contains editable business profile information. Null optional values clear their stored value during a full profile save.
+        /// </summary>
+        internal struct BusinessProfileData
+        {
+            [Required, StringLength(120)]
+            public string TradeName { get; set; }
+            [StringLength(200)]
+            public string? LegalName { get; set; }
+            [StringLength(13)]
+            public string? TaxIdentificationNumber { get; set; }
+            [StringLength(1000)]
+            public string? Description { get; set; }
+            public Guid? LogoId { get; set; }
+            public Guid? CoverImageId { get; set; }
+            [StringLength(30)]
+            public string? PhoneNumber { get; set; }
+            [StringLength(254), EmailAddress]
+            public string? Email { get; set; }
+        }
+        /// <summary>
+        /// Contains the business identity and its current profile returned by an authorized query.
+        /// </summary>
+        internal struct BusinessDetailsData
+        {
+            public Guid BusinessId { get; set; }
+            public Guid OwnerUserId { get; set; }
+            [Required, StringLength(40)]
+            public string BusinessType { get; set; }
+            public DateTimeOffset CreatedAt { get; set; }
+            public BusinessProfileData Profile { get; set; }
+        }
+    #endregion Structs
+    #region Task Database Initialization
+        /// <summary>
+        /// Creates the business schema, including nullable profile columns, during controlled setup.
+        /// </summary>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        private Task CreateBusinessTableAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("CreateBusinessTableAsync has not been implemented.");
+        }
+    #endregion Task Database Initialization
+    #region Task Business Operations
+        /// <summary>
+        /// Creates the configured business once using the supported initial type. Repeated setup must not create duplicates.
+        /// </summary>
+        /// <param name="businessData">The business data for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the server-generated identifier.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<Guid> InitializeBusinessAsync(BusinessSetupData businessData, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("InitializeBusinessAsync has not been implemented.");
+        }
+        /// <summary>
+        /// Returns the business after validating access.
+        /// </summary>
+        /// <param name="businessId">The business id for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task containing the authorized business details data.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task<BusinessDetailsData> GetBusinessAsync(Guid businessId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("GetBusinessAsync has not been implemented.");
+        }
+    #endregion Task Business Operations
+    #region Task Profile Operations
+        /// <summary>
+        /// Saves the additional business profile for the first time without changing ownership or type.
+        /// </summary>
+        /// <param name="businessId">The business id for this operation.</param>
+        /// <param name="profileData">The profile data for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task CompleteBusinessProfileAsync(Guid businessId, BusinessProfileData profileData, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("CompleteBusinessProfileAsync has not been implemented.");
+        }
+        /// <summary>
+        /// Updates the full business profile without changing ownership or type.
+        /// </summary>
+        /// <param name="businessId">The business id for this operation.</param>
+        /// <param name="profileData">The profile data for this operation.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="NotImplementedException">This operation is a design placeholder.</exception>
+        internal Task UpdateBusinessProfileAsync(Guid businessId, BusinessProfileData profileData, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException("UpdateBusinessProfileAsync has not been implemented.");
+        }
+    #endregion Task Profile Operations
+}
