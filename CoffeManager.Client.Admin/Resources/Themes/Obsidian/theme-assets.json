@@ -1,0 +1,31 @@
+{
+  "theme": "Obsidian",
+  "version": 1,
+  "palette": {
+    "background": "#0F1417",
+    "surface": "#181E22",
+    "accent": "#91DDC3"
+  },
+  "assets": [
+    {
+      "path": "Illustrations/home-cup-mint.png",
+      "usage": "Home header decoration",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "origin": "AI generated"
+    },
+    {
+      "path": "Backgrounds/obsidian-contours-background.svg",
+      "usage": "Editable vector background source",
+      "dimensions": [
+        2560,
+        1600
+      ],
+      "origin": "Local vector drawing"
+    }
+  ],
+  "integrationStatus": "Integrated: embedded HomeCup in HomeWelcomePanel; viewport background drawn by ObsidianBackdrop (GDI+)."
+}

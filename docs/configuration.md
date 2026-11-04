@@ -1,8 +1,8 @@
-> Entrega actual: lee primero `LEEME_HOME_OBSIDIANA.md`. Las siguientes notas describen revisiones anteriores y sus funciones conservadas.
+# Configuración local
 
-# Inicio y actualización local
+## Instalación existente
 
-Lee primero `LEEME_CAMBIOS.md`. Esta revisión requiere aplicar la migración 002 antes de usar el cliente. Si ya tienes conexión y Owner, conserva ambos; continúa directamente con la inicialización de esquema y la verificación. No necesitas regenerar la clave de activación.
+Conserva la base, Owner, secretos de desarrollo y carpeta de imágenes. No regeneres la clave ni repitas activación. Ejecuta la API y el cliente según README. El resto de esta guía describe la preparación de una instalación nueva y opciones de diagnóstico.
 
 # CoffeManager: primer recorrido conectado en localhost
 
@@ -54,7 +54,7 @@ En el cliente elige **Activar primera cuenta**, llena nombre, apellidos, correo,
 
 ## Qué está conectado
 
-Consulta la matriz de campos y operaciones en `AUDITORIA.md`. Los perfiles completos y las asignaciones de cuenta/rol/sucursal están implementados. Suscripciones comerciales, áreas, inventario y Caja siguen pendientes.
+Consulta la arquitectura en [architecture.md](architecture.md) y las pruebas en [testing.md](testing.md). Los perfiles completos y las asignaciones de cuenta/rol/sucursal están implementados. Suscripciones comerciales, áreas, inventario y Caja siguen pendientes.
 
 Para probar el alta de sucursales en tu entorno local de desarrollo:
 

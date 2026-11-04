@@ -14,9 +14,9 @@ internal static class MarfilCafe
         /// <param name="size">The size used by this operation.</param>
         /// <param name="bold">The bold used by this operation.</param>
         /// <returns>The result of the requested operation.</returns>
-        internal static Label Text(string text, float size = 11, bool bold = false) => new()
+        internal static Label Text(string text, float size = 11, bool bold = false) => new ObsidianLabel()
         {
-            Text = text, AutoSize = true, ForeColor = Espresso,
+            Text = text, AutoSize = true, ForeColor = Espresso, BackColor = Color.Transparent,
             Font = new Font("Segoe UI", size, bold ? FontStyle.Bold : FontStyle.Regular),
             Margin = new Padding(0, 8, 0, 12), MaximumSize = new Size(760, 0)
         };

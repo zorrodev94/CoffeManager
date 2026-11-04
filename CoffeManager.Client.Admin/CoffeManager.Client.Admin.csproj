@@ -1,6 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <ApplicationIcon>Resources/Brand/coffemanager.ico</ApplicationIcon>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
@@ -8,5 +9,5 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
-<ItemGroup><EmbeddedResource Include="Resources/Brand/*.png" /></ItemGroup>
+<ItemGroup><EmbeddedResource Include="Resources/Brand/coffemanager.ico" /><EmbeddedResource Include="Resources/Brand/*.png" /><EmbeddedResource Include="Resources/Themes/Obsidian/Illustrations/*.png" /></ItemGroup>
 </Project>

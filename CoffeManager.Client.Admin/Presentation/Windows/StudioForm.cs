@@ -13,6 +13,7 @@ internal class StudioForm : Form
     #region Initialization
         protected StudioForm()
         {
+            Icon=BrandResources.AppIcon;
             FormBorderStyle=FormBorderStyle.None;Padding=new Padding(1);BackColor=Color.FromArgb(218,207,193);
             AutoScaleDimensions=new SizeF(96,96);AutoScaleMode=AutoScaleMode.Dpi;Font=new Font("Segoe UI",11);
             Body=new Panel{Dock=DockStyle.Fill,BackColor=MarfilCafe.Ivory};
@@ -58,6 +59,17 @@ internal class StudioForm : Form
                 foreach(Control button in group.Controls)button.Size=new Size(P(48),P(46));
             }
         }
+        /// <summary>Displays a nested operation inside the current workspace without creating another desktop window.</summary>
+        internal async Task<DialogResult> ShowPageAsync(StudioForm page)
+        {
+            var completion=new TaskCompletionSource<DialogResult>();
+            var host=new Panel{Dock=DockStyle.Fill,BackColor=Obsidian.Background};Body.Controls.Add(host);host.BringToFront();
+            page.TopLevel=false;page.MinimumSize=Size.Empty;page.Padding=Padding.Empty;page._caption.Visible=false;page.Dock=DockStyle.Fill;host.Controls.Add(page);
+            page.FormClosed+=(_,_)=>completion.TrySetResult(page.DialogResult);
+            host.Disposed+=(_,_)=>completion.TrySetResult(DialogResult.Cancel);
+            try{page.Show();return await completion.Task;}
+            finally{host.Dispose();}
+        }
         private void ToggleMaximize(){WindowState=WindowState==FormWindowState.Maximized?FormWindowState.Normal:FormWindowState.Maximized;_caption.Invalidate(true);}
         protected override void OnHandleCreated(EventArgs e)
         {
@@ -66,7 +78,7 @@ internal class StudioForm : Form
         }
         protected override void WndProc(ref Message message)
         {
-            if(message.Msg==0x84&&WindowState==FormWindowState.Normal)
+            if(message.Msg==0x84&&TopLevel&&WindowState==FormWindowState.Normal)
             {
                 base.WndProc(ref message);if((int)message.Result!=1)return;
                 var point=PointToClient(new Point(unchecked((short)(long)message.LParam),unchecked((short)((long)message.LParam>>16))));var edge=Math.Max(5,DeviceDpi*6/96);

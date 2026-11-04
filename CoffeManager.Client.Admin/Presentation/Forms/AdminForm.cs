@@ -8,9 +8,13 @@ internal sealed class AdminForm : StudioForm
 {
     #region Operation Data
         private readonly AdminSession _session;
-        private readonly FlowLayoutPanel _content;
-        private readonly Panel _navigation;
+        private readonly ObsidianFlowPanel _content;
+        private readonly Panel _workspace;
+        private UserProfileEditor? _profileEditor;
+        private readonly ObsidianScrollPanel _navigation;
+        private bool _menuArranging;
         private readonly TableLayoutPanel _layout;
+        private string? _activePage;
         private readonly ToolTip _navigationTips=new();
         private readonly List<Image> _pageImages=[];
         private bool _busy;
@@ -21,14 +25,16 @@ internal sealed class AdminForm : StudioForm
         {
             _session=session;Text="CoffeManager · Administración";Size=new Size(1280,820);MinimumSize=new Size(640,480);
             StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",11);AutoScaleDimensions=new SizeF(96F,96F);AutoScaleMode=AutoScaleMode.None;BackColor=MarfilCafe.Ivory;
-            _layout=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1};_layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,235));_layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));_layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-            _navigation=new Panel{Dock=DockStyle.Fill,BackColor=Obsidian.Surface,AutoScroll=true,Padding=new Padding(12),Margin=Padding.Empty};
+            _layout=new BufferedNavigationLayout{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1};_layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,235));_layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));_layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));
+            _navigation=new ObsidianScrollPanel{DecoratedBackground=false,Dock=DockStyle.Fill,BackColor=Obsidian.Surface,Padding=new Padding(12),Margin=Padding.Empty};
             var menu=new NavigationButton("Menú","menu");menu.SetCompact(true);menu.Click+=(_,_)=>ToggleMenu();_navigation.Controls.Add(menu);_navigationTips.SetToolTip(menu,"Mostrar u ocultar nombres del menú");
             _navigation.Controls.Add(new NavigationButton("CoffeManager","brand"){Enabled=false,TabStop=false});
             AddNavigation("Inicio",ShowHomeAsync);AddNavigation("Mi perfil",ShowProfileAsync);AddNavigation("Negocio",ShowBusinessAsync);AddNavigation("Sucursales",ShowBranchesAsync);AddNavigation("Empleados",ShowEmployeesAsync);
             AddNavigation("Cerrar sesión",()=>{Close();return Task.CompletedTask;});
-            _content=new FlowLayoutPanel{Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true,Padding=new Padding(24)};
-            _layout.Controls.Add(_navigation,0,0);_layout.Controls.Add(_content,1,0);Body.Controls.Add(_layout);
+            _content=new ObsidianFlowPanel{Dock=DockStyle.Fill,Padding=new Padding(24)};
+            _workspace=new Panel{Dock=DockStyle.Fill,Margin=Padding.Empty};_workspace.Controls.Add(_content);
+            _layout.Controls.Add(_navigation,0,0);_layout.Controls.Add(_workspace,1,0);Body.Controls.Add(_layout);
+            _navigation.ArrangeRequested+=ApplyMenuLayout;
             Body.SizeChanged+=(_,_)=>ApplyMenuLayout();
             _content.SizeChanged+=(_,_)=>ResizeContent();_content.ControlAdded+=(_,_)=>ResizeContent();
             Shown+=async(_,_)=>{ApplyChromeScale();ApplyMenuLayout();await RunAsync(ShowHomeAsync);ResizeContent();};
@@ -51,7 +57,7 @@ internal sealed class AdminForm : StudioForm
         private void AddNavigation(string name,Func<Task> action)
         {
             var icon=name switch{"Inicio"=>"home","Mi perfil"=>"person","Negocio"=>"business","Sucursales"=>"branches","Empleados"=>"employees",_=>"logout"};
-            var button=new NavigationButton(name,icon);button.Click+=async(_,_)=>await RunAsync(action);_navigationTips.SetToolTip(button,name);_navigation.Controls.Add(button);
+            var button=new NavigationButton(name,icon);button.Click+=async(_,_)=>{if(_busy||name==_activePage)return;if(_profileEditor is not null&&!_profileEditor.ConfirmDiscard(this))return;CloseProfileEditor();await RunAsync(action);};_navigationTips.SetToolTip(button,name);_navigation.Controls.Add(button);
         }
         /// <summary>
         /// Toggle menu for the current entity operation.
@@ -63,22 +69,25 @@ internal sealed class AdminForm : StudioForm
         /// <summary>Applies one consistent rail width to every navigation control without animation.</summary>
         private void ApplyMenuLayout()
         {
-            var scale=DeviceDpi/96f;_layout.SuspendLayout();_navigation.SuspendLayout();
+            if(_menuArranging)return;_menuArranging=true;
+            var scale=DeviceDpi/96f;bool expanded=_expanded&&Body.Width>=880*scale;
+            bool railChanged=_layout.ColumnStyles[0].Width!=(expanded?240:76)*scale;
+            _layout.SuspendLayout();_navigation.SuspendLayout();_workspace.SuspendLayout();
             try
             {
-                _layout.ColumnStyles[0].Width=(_expanded?240:76)*scale;
-                _navigation.Padding=new Padding((int)((_expanded?12:10)*scale));
+                _layout.ColumnStyles[0].Width=(expanded?240:76)*scale;
+                _navigation.Padding=new Padding((int)((expanded?12:10)*scale));
                 int y=(int)(12*scale);
                 _content.Padding=new Padding((int)(24*scale));
-                foreach(Control item in _navigation.Controls)
+                foreach(Control item in _navigation.ContentControls)
                 {
                     if(item is NavigationButton button)
                     {
-                        button.SetCompact(!_expanded||button.AccessibleName=="Menú");button.Width=Math.Max(1,(int)((_expanded?240:76)*scale)-_navigation.Padding.Horizontal-2);
+                        button.SetCompact(!expanded||button.AccessibleName=="Menú");button.Width=Math.Max(1,(int)((expanded?240:76)*scale)-_navigation.Padding.Horizontal-2);
                     }
                     else
                     {
-                        item.Visible=_expanded;item.MaximumSize=new Size(Math.Max(1,(int)(235*scale)-_navigation.Padding.Horizontal-2),0);
+                        item.Visible=expanded;item.MaximumSize=new Size(Math.Max(1,(int)(235*scale)-_navigation.Padding.Horizontal-2),0);
                         if(item is Label)
                         {
                             item.AutoSize=false;item.Width=Math.Max(1,(int)(235*scale)-_navigation.Padding.Horizontal-2);item.Height=(int)(44*scale);
@@ -88,13 +97,23 @@ internal sealed class AdminForm : StudioForm
                     if(item.Visible)
                     {
                         int itemY=item.AccessibleName=="Cerrar sesión"?Math.Max(y,_navigation.ClientSize.Height-(int)(68*scale)):y;
-                        item.Location=new Point(_navigation.Padding.Left,itemY+_navigation.AutoScrollPosition.Y);
+                        item.Location=new Point(_navigation.Padding.Left,itemY+-_navigation.ScrollOffset);
                         y=itemY+item.Height+(int)(8*scale);
                     }
                 }
-                _navigation.AutoScrollMinSize=new Size(0,y);
+                _navigation.SetExtent(y);
             }
-            finally{_navigation.ResumeLayout(true);_layout.ResumeLayout(true);_navigation.HorizontalScroll.Enabled=false;}
+            finally
+            {
+                _navigation.ResumeLayout(true);_workspace.ResumeLayout(true);_layout.ResumeLayout(true);_menuArranging=false;
+                if(railChanged)
+                {
+                    // Moving native child windows can leave copied pixels from the previous rail width.
+                    // Finish the new layout before repainting the entire workspace and its children.
+                    _workspace.PerformLayout();_profileEditor?.PerformLayout();_content.PerformLayout();
+                    _layout.Refresh();
+                }
+            }
         }
         /// <summary>
         /// Begin page for the current entity operation.
@@ -103,8 +122,9 @@ internal sealed class AdminForm : StudioForm
         /// <param name="description">The description used by this operation.</param>
         private void BeginPage(string title,string description)
         {
-            foreach(Control item in _navigation.Controls)if(item is NavigationButton nav)nav.SelectPage(nav.AccessibleName==title||(title.StartsWith("Buen día")&&nav.AccessibleName=="Inicio"));
-            while(_content.Controls.Count>0)_content.Controls[0].Dispose();foreach(var image in _pageImages)image.Dispose();_pageImages.Clear();
+            _activePage=title.StartsWith("Buen día")?"Inicio":title;
+            foreach(Control item in _navigation.ContentControls)if(item is NavigationButton nav)nav.SelectPage(nav.AccessibleName==title||(title.StartsWith("Buen día")&&nav.AccessibleName=="Inicio"));
+            _content.ClearContent();foreach(var image in _pageImages)image.Dispose();_pageImages.Clear();
             _content.Controls.Add(MarfilCafe.Text(title,26,true));_content.Controls.Add(MarfilCafe.Text(description));
         }
         /// <summary>
@@ -128,7 +148,7 @@ internal sealed class AdminForm : StudioForm
         /// <summary>Keeps cards and text inside the available viewport at the current DPI.</summary>
         private void ResizeContent()
         {
-            var width=Math.Max(160,_content.ClientSize.Width-_content.Padding.Horizontal-SystemInformation.VerticalScrollBarWidth-8);
+            var width=Math.Max(1,_content.ContentWidth-_content.Padding.Horizontal);
             foreach(Control control in _content.Controls)
             {
                 if(control is FlowLayoutPanel card){card.MinimumSize=Size.Empty;card.MaximumSize=new Size(width,0);card.MinimumSize=new Size(width,0);card.Width=width;foreach(Control child in card.Controls)if(child is Label label)label.MaximumSize=new Size(Math.Max(100,width-card.Padding.Horizontal),0);}
@@ -136,6 +156,7 @@ internal sealed class AdminForm : StudioForm
                 else if(control is PictureBox picture&&picture.Width>120)picture.Width=Math.Min(width,650);
                 else if(control is CoverImagePanel)control.Width=width;
                 else if(control is HomeDashboard dashboard){dashboard.Width=width;dashboard.ArrangeDashboard();}
+                else if(control is UserProfileView profile){profile.Width=width;profile.ArrangeView();}
             }
         }
         /// <summary>Displays a consistent summary surface for a saved record or an empty state.</summary>
@@ -160,8 +181,9 @@ internal sealed class AdminForm : StudioForm
             dashboard.OpenBranches+=async(_,_)=>await RunAsync(ShowBranchesAsync);
             dashboard.OpenEmployees+=async(_,_)=>await RunAsync(ShowEmployeesAsync);
             dashboard.AddEmployee+=async(_,_)=>await RunAsync(async()=>{using var editor=new RecordEditor<EmployeeCreationData>("Agregar empleado",new(),_session.MediaConnection);if(editor.ShowDialog(this)!=DialogResult.OK)return;await _session.Employee.RegisterEmployeeAsync(editor.Data);await ShowHomeAsync();});
-            dashboard.RegisterAccount+=async(_,_)=>await RunAsync(async()=>{using var editor=new StaffAccountForm(_session,employees,branches,await _session.User.GetRolesAsync());if(editor.ShowDialog(this)==DialogResult.OK)await ShowHomeAsync();});
-            _content.Controls.Add(dashboard);ResizeContent();
+            dashboard.OpenProfile+=async(_,_)=>await RunAsync(ShowProfileAsync);
+            dashboard.RegisterAccount+=async(_,_)=>await RunAsync(async()=>{if(await StaffAccountForm.OpenAsync(this,_session)==DialogResult.OK)await ShowHomeAsync();});
+            _content.Controls.Add(new HomeWelcomePanel());_content.Controls.Add(dashboard);ResizeContent();
         }
     #endregion Home Operations
     #region Task Profile Operations
@@ -169,8 +191,22 @@ internal sealed class AdminForm : StudioForm
         private async Task ShowProfileAsync()
         {
             var user=await _session.User.GetAsync()??throw new InvalidOperationException("La cuenta no está disponible.");BeginPage("Mi perfil",$"{user.FirstName} {user.PaternalLastName} {user.MaternalLastName} · {user.Email}");
-            await AddImagesAsync(user.Profile.AvatarId,user.Profile.CoverImageId);AddSummaryCard(user.Profile.DisplayName,user.Profile.Description??"Completa tu presentación.");AddAllDetails(user.Profile);
-            AddAction("Completar o editar perfil",async()=>{using var editor=new RecordEditor<UserProfileData>("Mi perfil",user.Profile,_session.MediaConnection);if(editor.ShowDialog(this)!=DialogResult.OK)return;await _session.User.UpdateAsync(editor.Data);await ShowProfileAsync();});
+            Image? avatar=user.Profile.AvatarId is Guid avatarId?await LoadImageAsync(avatarId):null;
+            Image? cover=user.Profile.CoverImageId is Guid coverId?await LoadImageAsync(coverId):null;
+            var view=new UserProfileView(user,avatar,cover);view.EditRequested+=async(_,_)=>await RunAsync(()=>ShowProfileEditorAsync());_content.Controls.Add(view);ResizeContent();
+        }
+        private async Task ShowProfileEditorAsync()
+        {
+            var user=await _session.User.GetAsync()??throw new InvalidOperationException("La cuenta no está disponible.");
+            Image? avatar=user.Profile.AvatarId is Guid a?await LoadImageAsync(a):null;Image? cover=user.Profile.CoverImageId is Guid c?await LoadImageAsync(c):null;
+            _profileEditor=new UserProfileEditor(_session,user.Profile,avatar,cover){Dock=DockStyle.Fill};
+            _profileEditor.Saved+=async(_,_)=>{CloseProfileEditor();await RunAsync(ShowProfileAsync);};
+            _profileEditor.Cancelled+=(_,_)=>CloseProfileEditor();_workspace.Controls.Add(_profileEditor);_profileEditor.BringToFront();_content.Visible=false;
+        }
+        private void CloseProfileEditor(){if(_profileEditor is null)return;_profileEditor.Dispose();_profileEditor=null;_content.Visible=true;_content.PerformLayout();}
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if(_profileEditor is not null&&!_profileEditor.ConfirmDiscard(this)){e.Cancel=true;return;}base.OnFormClosing(e);
         }
     #endregion Task Profile Operations
     #region Task Business Operations
@@ -215,8 +251,8 @@ internal sealed class AdminForm : StudioForm
         {
             var isOwner=(await _session.User.GetAsync())?.IsOwner==true;var employees=await _session.Employee.GetEmployeesAsync()??[];BeginPage("Empleados","Identidad, información laboral y asignación operativa de tu equipo.");
             AddAction("Agregar empleado",async()=>{using var editor=new RecordEditor<EmployeeCreationData>("Agregar empleado",new(),_session.MediaConnection);if(editor.ShowDialog(this)!=DialogResult.OK)return;await _session.Employee.RegisterEmployeeAsync(editor.Data);await ShowEmployeesAsync();});
-            if(isOwner)AddAction("Registrar cuenta de acceso",async()=>{using var editor=new StaffAccountForm(_session,employees,await _session.Branch.GetAsync(),await _session.User.GetRolesAsync());if(editor.ShowDialog(this)!=DialogResult.OK)return;await ShowEmployeesAsync();});
-            if(isOwner)AddAction("Agregar rol",async()=>{using var editor=new RecordEditor<RoleCreationData>("Agregar rol",new(),_session.MediaConnection);if(editor.ShowDialog(this)!=DialogResult.OK)return;await _session.User.AddRoleAsync(editor.Data);await ShowEmployeesAsync();});
+            if(isOwner)AddAction("Registrar cuenta de acceso",async()=>{if(await StaffAccountForm.OpenAsync(this,_session)!=DialogResult.OK)return;await ShowEmployeesAsync();});
+            if(isOwner)AddAction("Agregar rol",async()=>{using var editor=new RoleCreationForm(_session);if(await ShowPageAsync(editor)!=DialogResult.OK)return;await ShowEmployeesAsync();});
             if(isOwner)AddAction("Agregar periodicidad de salario",()=>AddCatalogAsync("salary-bases","Periodicidad de salario"));if(isOwner)AddAction("Agregar estado laboral",()=>AddCatalogAsync("employment-statuses","Estado laboral"));
             if(employees.Count==0){AddSummaryCard("Tu equipo comienza aquí","Los empleados que no usan el sistema pueden registrarse sin una cuenta.");return;}
             var roles=await _session.User.GetRolesAsync();var branches=await _session.Branch.GetAsync();
@@ -272,4 +308,14 @@ internal sealed class AdminForm : StudioForm
             catch(Exception error) when(error is HttpRequestException or InvalidOperationException or ArgumentException){return null;}
         }
     #endregion Profile Presentation
+}
+
+/// <summary>Buffers the navigation shell while its columns change size.</summary>
+internal sealed class BufferedNavigationLayout : TableLayoutPanel
+{
+    internal BufferedNavigationLayout()
+    {
+        DoubleBuffered=true;
+        SetStyle(ControlStyles.AllPaintingInWmPaint|ControlStyles.ResizeRedraw,true);
+    }
 }

@@ -17,7 +17,7 @@ internal sealed class AccessForm : ObsidianAccessForm
     #region Initialization
         internal AccessForm(AdminSession session):base("Acceso")
         {
-            _session=session;AddHeading("Tu negocio empieza aquí.","Inicia sesión para continuar en CoffeManager.");
+            _session=session;AddHeading("Bienvenido de nuevo","Accede a la administración de tu negocio.");
             _email=AddField("Correo electrónico","ejemplo@correo.com",254);
             _password=AddField("Contraseña","Ingresa tu contraseña",128,true);
             _errors=Obsidian.Label(string.Empty,10);_errors.ForeColor=Color.FromArgb(255,174,165);Fields.Controls.Add(_errors);
@@ -41,7 +41,7 @@ internal sealed class AccessForm : ObsidianAccessForm
             }
             catch(Exception error)when(error is HttpRequestException or InvalidOperationException or TaskCanceledException)
             {
-                ConnectionStatus.ForeColor=Color.FromArgb(255,174,165);ConnectionStatus.Text="●  Conexión no disponible";RetryConnection.Visible=true;throw;
+                ConnectionStatus.ForeColor=Color.FromArgb(255,174,165);ConnectionStatus.Text=error is InvalidOperationException?"●  El servidor respondió; no se pudo comprobar la activación":"●  Conexión no disponible";RetryConnection.Visible=true;throw;
             }
         }
         private async Task LoginAsync()
@@ -55,7 +55,7 @@ internal sealed class AccessForm : ObsidianAccessForm
         private async Task RegisterAsync()
         {
             using var editor=new AccountActivationForm(data=>_session.User.RegisterInitialAsync(data));
-            if(editor.ShowDialog(this)==DialogResult.OK)
+            if(await ShowPageAsync(editor)==DialogResult.OK)
             {
                 _email.Input.Text=editor.Data.Email;
                 MessageBox.Show(this,"Cuenta creada. Ya puedes iniciar sesión.","Activación completada",MessageBoxButtons.OK,MessageBoxIcon.Information);
@@ -68,10 +68,8 @@ internal sealed class AccessForm : ObsidianAccessForm
             try
             {
                 using var authorization=new OwnerAuthorizationForm(_session);
-                if(authorization.ShowDialog(this)!=DialogResult.OK)return;
-                var employees=await _session.Employee.GetEmployeesAsync()??[];
-                using var editor=new StaffAccountForm(_session,employees,await _session.Branch.GetAsync(),await _session.User.GetRolesAsync());
-                if(editor.ShowDialog(this)==DialogResult.OK)MessageBox.Show(this,"La cuenta se registró correctamente.","Cuenta de empleado",MessageBoxButtons.OK,MessageBoxIcon.Information);
+                if(await ShowPageAsync(authorization)!=DialogResult.OK)return;
+                if(await StaffAccountForm.OpenAsync(this,_session)==DialogResult.OK)MessageBox.Show(this,"La cuenta se registró correctamente.","Cuenta de empleado",MessageBoxButtons.OK,MessageBoxIcon.Information);
             }
             finally{await CloseSessionAsync();}
             await RefreshSetupAsync();
@@ -82,7 +80,7 @@ internal sealed class AccessForm : ObsidianAccessForm
         }
         private async Task ExecuteAsync(Func<Task> action)
         {
-            if(_busy)return;_busy=true;Fields.Enabled=false;RetryConnection.Enabled=false;_errors.Text=string.Empty;
+            if(_busy)return;_busy=true;using var locked=new FieldBusyState(Body);RetryConnection.Enabled=false;_errors.Text=string.Empty;
             try{await action();}
             catch(Exception error)when(error is HttpRequestException or TaskCanceledException or InvalidOperationException or ValidationException)
             {
@@ -90,7 +88,7 @@ internal sealed class AccessForm : ObsidianAccessForm
                 if(error is HttpRequestException or TaskCanceledException){ConnectionStatus.Text="●  Conexión no disponible";ConnectionStatus.ForeColor=Color.FromArgb(255,174,165);RetryConnection.Visible=true;}
                 Fields.ScrollControlIntoView(_errors);
             }
-            finally{_busy=false;if(!IsDisposed){Fields.Enabled=true;RetryConnection.Enabled=true;}}
+            finally{_busy=false;if(!IsDisposed){RetryConnection.Enabled=true;}}
         }
     #endregion Account Operations
 }

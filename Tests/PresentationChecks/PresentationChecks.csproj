@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><EnableWindowsTargeting>true</EnableWindowsTargeting><ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>CoffeManager.PresentationChecks</AssemblyName><RootNamespace>CoffeManager.PresentationChecks</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../../CoffeManager.Client.Admin/CoffeManager.Client.Admin.csproj" /></ItemGroup>
+</Project>

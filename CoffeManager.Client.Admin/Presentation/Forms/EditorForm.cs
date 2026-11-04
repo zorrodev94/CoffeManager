@@ -18,9 +18,9 @@ internal sealed class EditorForm : StudioForm
         {
             Text = title; Width = 760; Height = 820; MinimumSize = new Size(520, 450);
             StartPosition = FormStartPosition.CenterParent; BackColor = MarfilCafe.Ivory;
-            Font = new Font("Segoe UI", 11); AutoScaleDimensions = new SizeF(96F,96F); AutoScaleMode = AutoScaleMode.Dpi; 
+            Font = new Font("Segoe UI", 11); AutoScaleDimensions = new SizeF(96F,96F); AutoScaleMode = AutoScaleMode.None;
             var actions = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 70, Padding = new Padding(20, 5, 0, 0) };
-            var save = MarfilCafe.Action("Guardar", (_, _) =>
+            var save = Obsidian.Action("Guardar", (_, _) =>
             {
                 if(_pendingOperations>0){MessageBox.Show(this,"Espera a que termine la carga de la imagen antes de guardar.","Preparando imagen");return;}
                 if(_validationData is not null)
@@ -36,7 +36,7 @@ internal sealed class EditorForm : StudioForm
                 }
                 DialogResult=DialogResult.OK;Close();
             });
-            var cancel = MarfilCafe.Action("Cancelar", (_, _) => { DialogResult = DialogResult.Cancel; Close(); }, false);
+            var cancel = Obsidian.Action("Cancelar", (_, _) => { DialogResult = DialogResult.Cancel; Close(); }, false);
             actions.Controls.AddRange([save, cancel]); AcceptButton = save; CancelButton = cancel;
             _fields = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Padding = new Padding(24) };
             _fields.Controls.Add(MarfilCafe.Text(title, 20, true));
@@ -46,7 +46,8 @@ internal sealed class EditorForm : StudioForm
                 var width = Math.Max(180, _fields.ClientSize.Width - _fields.Padding.Horizontal - 25);
                 foreach(Control control in _fields.Controls)
                 {
-                    if(control is TextBox||control is StudioSurface||control is ComboBox||control is DateTimePicker||control is NumericUpDown) control.Width = width;
+                    if(control is ObsidianField||control is ObsidianSelector||control is TextBox||control is StudioSurface||control is ComboBox||control is DateTimePicker||control is NumericUpDown) control.Width = width;
+                    if(control is ObsidianCheckBox check){check.AutoSize=false;check.Width=width;check.Height=check.GetPreferredSize(new Size(width,0)).Height;}
                     if(control is Label label) label.MaximumSize = new Size(width, 0);
                     if(control is FlowLayoutPanel row)
                     {
@@ -56,6 +57,19 @@ internal sealed class EditorForm : StudioForm
                 }
             }
             _fields.Resize+=(_,_)=>Reflow();_fields.ControlAdded+=(_,_)=>Reflow();Shown+=(_,_)=>Reflow();
+            void ScaleEditors()
+            {
+                float scale=DeviceDpi/96f;_fields.Padding=new Padding((int)(24*scale));actions.Height=(int)(74*scale);foreach(Control button in actions.Controls){button.Size=new Size((int)(160*scale),(int)(44*scale));button.Margin=new Padding(0,(int)(8*scale),(int)(12*scale),0);}actions.Padding=new Padding((int)(20*scale),(int)(5*scale),0,0);
+                foreach(Control control in _fields.Controls)if(control is ObsidianField field)field.Height=(int)((field.Input.Multiline?122:48)*scale);else if(control is ObsidianSelector selector)selector.Height=(int)(48*scale);
+                ApplyChromeScale();Reflow();
+            }
+            Load+=(_,_)=>
+            {
+                if(!TopLevel){ScaleEditors();return;}
+                var area=Screen.FromControl(Owner??this).WorkingArea;Size=AccessLayoutMetrics.StartupSize(new Size(760,820),area.Size,DeviceDpi);MinimumSize=AccessLayoutMetrics.StartupSize(new Size(520,450),area.Size,DeviceDpi);
+                var center=Owner?.Bounds??area;Location=new Point(Math.Clamp(center.Left+(center.Width-Width)/2,area.Left,Math.Max(area.Left,area.Right-Width)),Math.Clamp(center.Top+(center.Height-Height)/2,area.Top,Math.Max(area.Top,area.Bottom-Height)));ScaleEditors();
+            };
+            DpiChanged+=(_,_)=>BeginInvoke((Action)ScaleEditors);
         }
     #endregion Initialization
     #region Field Operations
@@ -69,10 +83,8 @@ internal sealed class EditorForm : StudioForm
         internal TextBox AddField(string label, string value = "", bool multiline = false)
         {
             _fields.Controls.Add(MarfilCafe.Text(label));
-            var input = MarfilCafe.Input(value, multiline);
-            var surface=new StudioSurface{Width=420,Height=multiline?122:54,Margin=new Padding(0,0,0,14)};
-            input.Dock=DockStyle.Fill;surface.Controls.Add(input);input.Enter+=(_,_)=>surface.Invalidate();input.Leave+=(_,_)=>surface.Invalidate();
-            _fields.Controls.Add(surface); return input;
+            var surface=new ObsidianField(label,string.Empty,multiline?1000:160,false,multiline){Width=420,Height=multiline?122:48};surface.Input.Text=value;
+            _fields.Controls.Add(surface);return surface.Input;
         }
         /// <summary>Adds a section heading inside the current interaction form.</summary>
         internal void AddSection(string title)=>_fields.Controls.Add(MarfilCafe.Text(title,15,true));

@@ -12,6 +12,8 @@ internal class ObsidianAccessForm : StudioForm
         private readonly bool _showArtwork;
         private readonly Panel _viewport;
         private readonly Panel _footer;
+        private readonly Panel _actions;
+        private Button? _primaryAction,_secondaryAction;
         protected readonly Label ConnectionStatus;
         protected readonly LinkLabel RetryConnection;
     #endregion Operation Data
@@ -27,6 +29,7 @@ internal class ObsidianAccessForm : StudioForm
             _viewport=new Panel{Dock=DockStyle.Fill,BackColor=Obsidian.Background};Body.Controls.Add(_viewport);Body.Controls.Add(_footer);
             Fields=new AccessStackPanel{CenterVertically=height<850,MaximumLogicalWidth=height>=850?680:460};
             _art=new CoverImagePanel{Source=BrandResources.RefinedBackground,BackColor=Obsidian.Background,AccessibleName="Cafetería nocturna"};
+            _actions=new Panel{BackColor=Obsidian.Background,Visible=false};_viewport.Controls.Add(_actions);
             _viewport.Controls.Add(Fields);_viewport.Controls.Add(_art);_art.Visible=showArtwork;
             Body.Resize+=(_,_)=>Arrange();Shown+=(_,_)=>{ApplyChromeScale();Arrange();BeginInvoke((Action)Arrange);};DpiChanged+=(_,_)=>BeginInvoke((Action)(()=>{ApplyChromeScale();Arrange();}));
         }
@@ -35,9 +38,11 @@ internal class ObsidianAccessForm : StudioForm
         /// <summary>Converts the requested logical startup size once, before fitting it to the monitor working area.</summary>
         protected override void OnLoad(EventArgs e)
         {
-            var scale=DeviceDpi/96f;var area=Screen.FromControl(this).WorkingArea;
+            if(!TopLevel){base.OnLoad(e);Arrange();return;}
+            var scale=DeviceDpi/96f;var area=Screen.FromControl(Owner??this).WorkingArea;
             Size=AccessLayoutMetrics.StartupSize(_startupLogicalSize,area.Size,DeviceDpi);
-            Location=new Point(area.Left+(area.Width-Width)/2,area.Top+(area.Height-Height)/2);
+            var center=Owner?.Bounds??area;
+            Location=new Point(Math.Clamp(center.Left+(center.Width-Width)/2,area.Left,Math.Max(area.Left,area.Right-Width)),Math.Clamp(center.Top+(center.Height-Height)/2,area.Top,Math.Max(area.Top,area.Bottom-Height)));
             MinimumSize=new Size(Math.Min((int)(560*scale),area.Width-24),Math.Min((int)(480*scale),area.Height-24));
             base.OnLoad(e);Arrange();
         }
@@ -51,8 +56,14 @@ internal class ObsidianAccessForm : StudioForm
         {
             var pair=new AccessPairPanel(firstLabel,firstPlaceholder,firstMax,secondLabel,secondPlaceholder,secondMax,password);Fields.Controls.Add(pair);return(pair.First,pair.Second);
         }
+        /// <summary>Keeps submission actions reachable while the form fields scroll independently.</summary>
+        protected void AddFormActions(Button primary,Button secondary)
+        {
+            _primaryAction=primary;_secondaryAction=secondary;_actions.Controls.AddRange([primary,secondary]);_actions.Visible=true;AcceptButton=primary;CancelButton=secondary;Arrange();
+        }
         protected void AddHeading(string title,string description)
         {
+            Fields.Controls.Add(new AccessBrand());
             var heading=Obsidian.Label(title,24,true);heading.Margin=new Padding(0,0,0,10);Fields.Controls.Add(heading);
             var note=Obsidian.Label(description,11);note.Tag="access-subtitle";note.ForeColor=Obsidian.Muted;note.Margin=new Padding(0,0,0,22);Fields.Controls.Add(note);
         }
@@ -64,7 +75,13 @@ internal class ObsidianAccessForm : StudioForm
                 int P(int value)=>(int)Math.Round(value*DeviceDpi/96f);
                 _footer.Height=P(34);ConnectionStatus.SetBounds(P(22),P(6),Math.Max(1,_footer.Width-P(150)),P(24));RetryConnection.SetBounds(Math.Max(0,_footer.Width-P(110)),P(6),P(90),P(24));
                 var regions=AccessLayoutMetrics.Calculate(_viewport.ClientSize.Width,_viewport.ClientSize.Height,DeviceDpi);
-                Fields.Bounds=_showArtwork?regions.Fields:_viewport.ClientRectangle;_art.Bounds=regions.Artwork;
+                var fieldRegion=_showArtwork?regions.Fields:_viewport.ClientRectangle;
+                if(_primaryAction is not null&&_secondaryAction is not null)
+                {
+                    var actions=AccessLayoutMetrics.WithActions(fieldRegion,DeviceDpi,Fields.MaximumLogicalWidth);
+                    _actions.Bounds=actions.Actions;_primaryAction.Bounds=actions.Primary;_secondaryAction.Bounds=actions.Secondary;fieldRegion=actions.Fields;
+                }
+                Fields.Bounds=fieldRegion;_art.Bounds=regions.Artwork;
                 Fields.PerformLayout();_art.Invalidate();
             }
             finally{_arranging=false;}

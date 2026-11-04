@@ -3,6 +3,7 @@ using System.Drawing.Imaging;
 using System.Globalization;
 using System.Reflection;
 using CoffeManager.Client.Admin.Connection;
+using CoffeManager.Client.Admin.Presentation.Controls;
 using CoffeManager.Client.Admin.Presentation.Theme;
 namespace CoffeManager.Client.Admin.Presentation.Forms;
 /// <summary>Associates one interaction structure with a complete, labelled editor without mixing entity persistence into presentation.</summary>
@@ -41,9 +42,9 @@ internal sealed class RecordEditor<T> : IDisposable where T:struct
                 if(property.Name is "AvatarId" or "LogoId" or "CoverImageId"){AddImage(property,label,(Guid?)value);continue;}
                 if(options?.TryGetValue(property.Name,out var choices)==true)
                 {
-                    var combo=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,FlatStyle=FlatStyle.Flat,BackColor=Obsidian.Surface,ForeColor=MarfilCafe.Espresso,Font=new Font("Segoe UI",11),AccessibleName=label};
+                    var selector=new ObsidianSelector(label);var combo=selector.Input;
                     foreach(var choice in choices)combo.Items.Add(choice);combo.DisplayMember=nameof(EditorOption.Label);combo.SelectedIndex=choices.ToList().FindIndex(x=>Equals(x.Value,value));if(combo.SelectedIndex<0&&combo.Items.Count>0)combo.SelectedIndex=0;
-                    _form.AddEditor(label,combo);_values[property.Name]=()=>((EditorOption?)combo.SelectedItem)?.Value;continue;
+                    _form.AddEditor(label,selector);_values[property.Name]=()=>((EditorOption?)combo.SelectedItem)?.Value;continue;
                 }
                 var type=Nullable.GetUnderlyingType(property.PropertyType)??property.PropertyType;
                 if(type==typeof(DateOnly))
@@ -57,7 +58,7 @@ internal sealed class RecordEditor<T> : IDisposable where T:struct
                 }
                 else if(type==typeof(bool))
                 {
-                    var box=new CheckBox{Text=label,Checked=value is true,AutoSize=true,AccessibleName=label};_form.AddEditor("Permiso",box);_values[property.Name]=()=>box.Checked;
+                    var box=new ObsidianCheckBox{Text=label,Checked=value is true,AutoSize=true,AccessibleName=label};_form.AddEditor("Permiso",box);_values[property.Name]=()=>box.Checked;
                 }
                 else if(type==typeof(Guid))throw new InvalidOperationException("Faltan las opciones autorizadas del campo "+label+".");
                 else

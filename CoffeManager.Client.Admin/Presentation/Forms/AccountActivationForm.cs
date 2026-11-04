@@ -25,8 +25,9 @@ internal sealed class AccountActivationForm : ObsidianAccessForm
             _key=AddField("Clave de activación","Clave entregada por tu proveedor",200,true);
             var role=Obsidian.Label("Propietario · Asignado automáticamente en la primera activación",10);role.ForeColor=Obsidian.Muted;Fields.Controls.Add(role);
             _errors=Obsidian.Label(string.Empty,10);_errors.ForeColor=Color.FromArgb(255,174,165);Fields.Controls.Add(_errors);
-            var save=Obsidian.Action("Activar cuenta",async(_,_)=>await ConfirmAsync());Fields.Controls.Add(save);AcceptButton=save;
-            var cancel=Obsidian.Action("Volver al acceso",(_,_)=>{DialogResult=DialogResult.Cancel;Close();},false);Fields.Controls.Add(cancel);CancelButton=cancel;
+            var save=Obsidian.Action("Activar cuenta",async(_,_)=>await ConfirmAsync());
+            var cancel=Obsidian.Action("Volver al acceso",(_,_)=>{DialogResult=DialogResult.Cancel;Close();},false);
+            AddFormActions(save,cancel);
             Shown+=(_,_)=>_first.Input.Focus();
         }
     #endregion Initialization
@@ -39,7 +40,7 @@ internal sealed class AccountActivationForm : ObsidianAccessForm
             var data=new AccountRegistrationData{FirstName=_first.Input.Text.Trim(),PaternalLastName=_paternal.Input.Text.Trim(),MaternalLastName=string.IsNullOrWhiteSpace(_maternal.Input.Text)?null:_maternal.Input.Text.Trim(),Email=_email.Input.Text.Trim(),Password=_password.Input.Text,SetupKey=_key.Input.Text};
             var errors=new List<ValidationResult>();object value=data;
             if(!Validator.TryValidateObject(value,new ValidationContext(value),errors,true)){_errors.Text=string.Join(Environment.NewLine,errors.Select(x=>x.ErrorMessage));Fields.ScrollControlIntoView(_errors);return;}
-            _saving=true;Fields.Enabled=false;
+            _saving=true;using var locked=new FieldBusyState(Body);
             try
             {
                 await _register(data);Data=data;_saving=false;DialogResult=DialogResult.OK;Close();
@@ -48,7 +49,7 @@ internal sealed class AccountActivationForm : ObsidianAccessForm
             {
                 _errors.Text=error is HttpRequestException or TaskCanceledException?"No se pudo completar la conexión. Tus datos siguen aquí; puedes intentarlo nuevamente.":error.Message;
             }
-            finally{if(!IsDisposed)Fields.ScrollControlIntoView(_errors);_saving=false;if(!IsDisposed)Fields.Enabled=true;}
+            finally{if(!IsDisposed)Fields.ScrollControlIntoView(_errors);_saving=false;}
 
         }
         /// <summary>Prevents closing the modal while the server is resolving account creation.</summary>

@@ -9,7 +9,10 @@ internal sealed class HomeDashboard : Panel
         private readonly DashboardTile[] _actions;
         private readonly Label _actionsTitle,_activityTitle,_emptyTitle,_emptyDescription;
         private readonly Panel _activity;
-        internal event EventHandler? OpenBusiness,OpenBranches,OpenEmployees,AddEmployee,RegisterAccount;
+        private readonly Panel _guide;
+        private readonly Label _guideTitle,_guideNote;
+        private readonly Button _profile;
+        internal event EventHandler? OpenBusiness,OpenBranches,OpenEmployees,AddEmployee,RegisterAccount,OpenProfile;
         private bool _arranging;
     #endregion Operation Data
     #region Initialization
@@ -23,6 +26,9 @@ internal sealed class HomeDashboard : Panel
             _actionsTitle=Heading("Acciones rápidas");_activityTitle=Heading("Actividad del sistema");
             _activity=new Panel{BackColor=Obsidian.Surface};
             _emptyTitle=Obsidian.Label("Todo listo para comenzar",13,true);_emptyDescription=Obsidian.Label("El historial de actividad estará disponible en una próxima entrega.",10);_emptyDescription.ForeColor=Obsidian.Muted;
+            _guide=new Panel{BackColor=Obsidian.Surface};_guideTitle=Obsidian.Label("Tu siguiente paso",13,true);_guideNote=Obsidian.Label("Personaliza tu foto y completa tus datos de contacto.",10);_guideNote.ForeColor=Obsidian.Muted;
+            _profile=Obsidian.Action("Ir a mi perfil",(_,e)=>OpenProfile?.Invoke(this,e));_guide.Controls.AddRange([_guideTitle,_guideNote,_profile]);_activity.Controls.Add(_guide);
+            _activityTitle.BackColor=Obsidian.Surface;
             _activity.Controls.AddRange([_activityTitle,_emptyTitle,_emptyDescription]);Controls.AddRange(_totals);Controls.Add(_actionsTitle);Controls.AddRange(_actions);Controls.Add(_activity);
             _activity.Paint+=(_,e)=>{using var border=new Pen(Obsidian.Border);e.Graphics.DrawRectangle(border,0,0,_activity.Width-1,_activity.Height-1);};
         }
@@ -42,9 +48,13 @@ internal sealed class HomeDashboard : Panel
                 _actionsTitle.AutoSize=false;_actionsTitle.Bounds=layout.Heading;
                 for(int i=0;i<_actions.Length;i++)_actions[i].Bounds=layout.Actions[i];
                 _activity.Bounds=layout.Activity;
-                _activityTitle.AutoSize=false;_activityTitle.SetBounds(P(22),P(18),Math.Max(1,Width-P(44)),P(34));
-                _emptyTitle.AutoSize=false;_emptyTitle.TextAlign=ContentAlignment.MiddleCenter;_emptyTitle.BackColor=Obsidian.Surface;_emptyTitle.SetBounds(P(18),P(78),Math.Max(1,Width-P(36)),P(32));
-                _emptyDescription.AutoSize=false;_emptyDescription.TextAlign=ContentAlignment.TopCenter;_emptyDescription.BackColor=Obsidian.Surface;_emptyDescription.SetBounds(P(18),P(118),Math.Max(1,Width-P(36)),P(60));
+                bool guide=Width>=P(760);_guide.Visible=guide;int activityWidth=guide?(int)(Width*.62f):Width;
+                _activityTitle.AutoSize=false;_activityTitle.SetBounds(P(22),P(18),Math.Max(1,activityWidth-P(44)),P(34));
+                _emptyTitle.AutoSize=false;_emptyTitle.TextAlign=ContentAlignment.MiddleCenter;_emptyTitle.BackColor=Obsidian.Surface;_emptyTitle.SetBounds(P(18),P(78),Math.Max(1,activityWidth-P(36)),P(32));
+                _emptyDescription.AutoSize=false;_emptyDescription.TextAlign=ContentAlignment.TopCenter;_emptyDescription.BackColor=Obsidian.Surface;_emptyDescription.SetBounds(P(18),P(118),Math.Max(1,activityWidth-P(36)),P(60));
+                _guide.SetBounds(activityWidth,P(12),Math.Max(1,Width-activityWidth-P(16)),P(170));
+                foreach(var label in new[]{_guideTitle,_guideNote}){label.AutoSize=false;label.BackColor=Obsidian.Surface;}
+                _guideTitle.SetBounds(P(16),P(10),Math.Max(1,_guide.Width-P(32)),P(32));_guideNote.SetBounds(P(16),P(50),Math.Max(1,_guide.Width-P(32)),P(58));_profile.SetBounds(P(16),P(118),Math.Max(1,_guide.Width-P(32)),P(40));
                 Height=layout.Height;
             }
             finally{_arranging=false;}

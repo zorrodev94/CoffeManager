@@ -24,3 +24,15 @@ foreach(var actions in new[]{2,3})
     for(int i=0;i<boxes.Length;i++)for(int j=i+1;j<boxes.Length;j++)if(boxes[i].IntersectsWith(boxes[j]))throw new Exception("Home card overlap");
 }
 Console.WriteLine("PASS: Home card bounds, non-overlap and responsive rows: 64 viewport/DPI/action combinations. Geometry only; Windows rendering remains pending.");
+
+foreach(var dpi in new[]{96,120,144,192})
+foreach(var size in new[]{new Size(560,480),new Size(670,600),new Size(1260,880),new Size(2560,1700)})
+foreach(var artwork in new[]{false,true})
+{
+    var region=artwork?AccessLayoutMetrics.Calculate(size.Width,size.Height,dpi).Fields:new Rectangle(Point.Empty,size);
+    var layout=AccessLayoutMetrics.WithActions(region,dpi,680);
+    if(layout.Fields.IntersectsWith(layout.Actions)||layout.Fields.Bottom!=layout.Actions.Top||layout.Actions.Bottom!=region.Bottom)throw new Exception("Fixed actions overlap fields");
+    var bounds=new Rectangle(Point.Empty,layout.Actions.Size);
+    if(!bounds.Contains(layout.Primary)||!bounds.Contains(layout.Secondary)||layout.Primary.IntersectsWith(layout.Secondary))throw new Exception("Fixed actions overflow");
+}
+Console.WriteLine("PASS: fixed submission actions inside bounds, without overlap for 32 DPI/viewport/artwork combinations.");

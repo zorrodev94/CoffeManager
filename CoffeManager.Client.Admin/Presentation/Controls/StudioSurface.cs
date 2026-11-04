@@ -7,7 +7,7 @@ internal sealed class StudioSurface : Panel
     #region Initialization
         internal StudioSurface()
         {
-            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer,true);
+            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
             Padding=new Padding(14,12,14,12);BackColor=Obsidian.Surface;
         }
     #endregion Initialization

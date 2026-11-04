@@ -8,8 +8,9 @@ internal sealed class NavigationButton : Button
         private readonly string _caption;
         private readonly string _icon;
         private bool _compact;
+        private int _layoutDpi;
         private bool _selected;
-        internal void SelectPage(bool selected){_selected=selected;Invalidate();}
+        internal void SelectPage(bool selected){if(_selected==selected)return;_selected=selected;Invalidate();}
     #endregion Operation Data
     #region Initialization
         /// <summary>Creates a keyboard-accessible navigation action.</summary>
@@ -29,7 +30,8 @@ internal sealed class NavigationButton : Button
         /// <param name="compact">Whether the button should display only its icon.</param>
         internal void SetCompact(bool compact)
         {
-            _compact=compact;var scale=DeviceDpi/96f;AutoSize=false;MinimumSize=Size.Empty;
+            if(_compact==compact&&_layoutDpi==DeviceDpi)return;
+            _compact=compact;_layoutDpi=DeviceDpi;var scale=DeviceDpi/96f;AutoSize=false;MinimumSize=Size.Empty;
             Size=new Size((int)((compact?48:203)*scale),(int)(48*scale));Invalidate();
         }
         /// <summary>Draws crisp icons and captions at the current display scale.</summary>

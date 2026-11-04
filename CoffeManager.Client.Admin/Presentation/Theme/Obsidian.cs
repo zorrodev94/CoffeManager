@@ -12,9 +12,9 @@ internal static class Obsidian
         internal static readonly Color Mint=Color.FromArgb(145,221,195);
     #endregion Theme Data
     #region Control Factories
-        internal static Label Label(string text,float size=10,bool bold=false)=>new()
+        internal static Label Label(string text,float size=10,bool bold=false)=>new ObsidianLabel()
         {
-            Text=text,AutoSize=true,ForeColor=Text,BackColor=Background,
+            Text=text,AutoSize=true,ForeColor=Text,BackColor=Color.Transparent,
             Font=new Font("Segoe UI",size,bold?FontStyle.Bold:FontStyle.Regular),Margin=new Padding(0,0,0,7)
         };
         internal static Button Action(string text,EventHandler handler,bool primary=true)
@@ -24,7 +24,7 @@ internal static class Obsidian
         }
         internal static LinkLabel Link(string text,EventHandler handler)
         {
-            var link=new LinkLabel{Text=text,AutoSize=true,LinkColor=Mint,ActiveLinkColor=Text,VisitedLinkColor=Mint,BackColor=Background,Font=new Font("Segoe UI",10),Margin=new Padding(0,4,0,12),AccessibleName=text};
+            var link=new LinkLabel{Text=text,AutoSize=true,LinkColor=Mint,ActiveLinkColor=Text,VisitedLinkColor=Mint,BackColor=Color.Transparent,Font=new Font("Segoe UI",10),Margin=new Padding(0,4,0,12),AccessibleName=text};
             link.Click+=handler;return link;
         }
     #endregion Control Factories

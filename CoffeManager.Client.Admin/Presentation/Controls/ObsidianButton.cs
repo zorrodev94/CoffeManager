@@ -13,7 +13,7 @@ internal sealed class ObsidianButton : Button
         {
             _primary=primary;FlatStyle=FlatStyle.Flat;FlatAppearance.BorderSize=0;UseVisualStyleBackColor=false;
             BackColor=Obsidian.Background;ForeColor=Obsidian.Text;Cursor=Cursors.Hand;Font=new Font("Segoe UI Semibold",11);
-            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer,true);
+            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
         }
     #endregion Initialization
     #region Drawing Operations

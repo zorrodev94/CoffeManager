@@ -21,14 +21,15 @@ internal sealed class OwnerAuthorizationForm : ObsidianAccessForm
             _email=AddField("Correo del propietario","propietario@correo.com",254);
             _password=AddField("Contraseña","Contraseña del propietario",128,true);
             _errors=Obsidian.Label(string.Empty,10);_errors.ForeColor=Color.FromArgb(255,174,165);Fields.Controls.Add(_errors);
-            var authorize=Obsidian.Action("Continuar al registro",async(_,_)=>await AuthorizeAsync());Fields.Controls.Add(authorize);AcceptButton=authorize;
-            var cancel=Obsidian.Action("Volver al acceso",(_,_)=>{DialogResult=DialogResult.Cancel;Close();},false);Fields.Controls.Add(cancel);CancelButton=cancel;
+            var authorize=Obsidian.Action("Continuar al registro",async(_,_)=>await AuthorizeAsync());
+            var cancel=Obsidian.Action("Volver al acceso",(_,_)=>{DialogResult=DialogResult.Cancel;Close();},false);
+            Fields.Controls.Add(authorize);Fields.Controls.Add(cancel);AcceptButton=authorize;CancelButton=cancel;
         }
     #endregion Initialization
     #region Authorization Operations
         private async Task AuthorizeAsync()
         {
-            if(_busy)return;_busy=true;Fields.Enabled=false;_errors.Text=string.Empty;
+            if(_busy)return;_busy=true;using var locked=new FieldBusyState(Body);_errors.Text=string.Empty;
             try
             {
                 await _session.User.LoginAsync(new LoginData{Email=_email.Input.Text.Trim(),Password=_password.Input.Text});
@@ -40,7 +41,7 @@ internal sealed class OwnerAuthorizationForm : ObsidianAccessForm
                 _busy=false;DialogResult=DialogResult.OK;Close();
             }
             catch(Exception error)when(error is HttpRequestException or InvalidOperationException or TaskCanceledException or ValidationException){_errors.Text=error.Message;Fields.ScrollControlIntoView(_errors);}
-            finally{_password.Input.Clear();_busy=false;if(!IsDisposed)Fields.Enabled=true;}
+            finally{_password.Input.Clear();_busy=false;}
         }
         protected override void OnFormClosing(FormClosingEventArgs e){if(_busy){e.Cancel=true;return;}base.OnFormClosing(e);}
     #endregion Authorization Operations

@@ -62,19 +62,24 @@ CoffeManager/
 ├── Models/                        # Modelos y repositorios
 ├── Scripts/                       # Configuración local
 ├── Tests/                         # Pruebas y verificaciones
-├── Documentation/                 # Documentación y análisis
-├── docs/assets/                   # Imágenes para GitHub
-├── LEEME_CAMBIOS.md
-├── INICIO_CLIENTE.md
+├── docs/                          # Configuración, arquitectura, pruebas y assets
+├── CHANGELOG.md                    # Cambios por versión
 ├── LICENSE                        # Derechos reservados
 └── README.md
 ```
+
+## Documentación
+
+- [Configuración local](docs/configuration.md)
+- [Arquitectura y mapa de estudio](docs/architecture.md)
+- [Pruebas y defectos pendientes](docs/testing.md)
+- [Historial de cambios](CHANGELOG.md)
 
 ## Puesta en marcha local
 
 **Requisitos:** Windows, .NET 10 SDK, Visual Studio con desarrollo de escritorio .NET, y SQL Server/Express. La API y SQL Server se prueban en el mismo equipo durante el recorrido inicial.
 
-1. **Leer primero [`LEEME_CAMBIOS.md`](LEEME_CAMBIOS.md)** y [`INICIO_CLIENTE.md`](INICIO_CLIENTE.md).
+1. **Consultar [configuración local](docs/configuration.md)**. Si ya tienes base y Owner, pasa al paso 6; no repitas configuración ni activación.
 2. Si aún no existe la base de datos, crear **`CoffeManager`** mediante `Infrastructure/Database/Scripts/000_create_database.sql` en SSMS.
 3. Configurar la conexión local y el secreto de activación, **solo si no se configuraron anteriormente**:
 
@@ -129,8 +134,8 @@ Las aportaciones se registran según el trabajo efectivamente realizado: impleme
 
 - [Issues / historias de usuario](https://github.com/zorrodev94/CoffeManager/issues)
 - [Commits de la rama master](https://github.com/zorrodev94/CoffeManager/commits/master)
-- [Documentación de cambios](LEEME_CAMBIOS.md)
-- [Auditoría funcional](AUDITORIA.md)
+- [Cambios por versión](CHANGELOG.md)
+- [Pruebas y defectos pendientes](docs/testing.md)
 
 ## Estado y alcance
 

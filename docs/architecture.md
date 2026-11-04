@@ -1,4 +1,4 @@
-# Dónde revisar los espejos
+# Arquitectura y mapa de estudio
 
 | Responsabilidad | Servidor | Cliente administrativo |
 |---|---|---|
@@ -15,4 +15,16 @@ El servidor recibe los identificadores de dueño/usuario desde la sesión. Esos 
 
 Los arreglos de inicialización solo existen en servidor, porque el cliente no crea tablas ni siembra catálogos. Contracts se reserva para interfaces; Services sigue reservado para cuando exista una responsabilidad que lo necesite.
 
-Los formularios de perfiles usan RecordEditor<T> con una estructura específica. El perfil de usuario no solicita contraseña ni cambia la identidad de login; la asignación laboral y el acceso a cuentas están en una operación separada del perfil de empleado.
+Los perfiles de negocio, sucursal y empleado usan RecordEditor<T>. Mi perfil usa UserProfileView y UserProfileEditor con UserProfileData. El perfil de usuario no solicita contraseña ni cambia la identidad de login; la asignación laboral y el acceso a cuentas están en una operación separada del perfil de empleado.
+
+## Recorridos
+
+Cliente WinForms → ApiConnection HTTPS → API autenticada → repositorios → SQL Server. El servidor determina el usuario y alcance desde la sesión.
+
+- Activación: consulta setup-required y, sólo cuando corresponde, bootstrap crea al primer Owner.
+- Acceso: login y cookie temporal; logout limpia la cookie local incluso si falla la petición.
+- Registro: acceso externo exige autorización del Owner; el interno reutiliza la sesión. Ambos usan StaffAccountForm.OpenAsync y catálogos de la API.
+- Perfil: User.GetAsync → UserProfileView → UserProfileEditor → User.UpdateAsync → nueva consulta. Avatar y portada se almacenan mediante el servicio de medios.
+- Interfaz: StudioForm aloja páginas; AccessStackPanel mide campos; ObsidianField/Selector/CheckBox comparten controles; ObsidianScrollPanel controla desplazamiento; HomeDashboard presenta datos reales.
+
+Las suscripciones comerciales permanecen separadas del perfil personal.
