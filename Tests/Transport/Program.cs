@@ -20,6 +20,14 @@ using(var connection=new ApiConnection(new Uri("https://localhost/"),new Reply(H
     try{await connection.CreateAsync("api/business",new CreateRequest{Name="Valid"});throw new Exception("Malformed creation response accepted");}
     catch(InvalidOperationException error) when(error.InnerException is System.Text.Json.JsonException) { }
 }
+using(var handler=new CookieReply())
+using(var connection=new ApiConnection(new Uri("https://localhost/"),handler))
+{
+    handler.CookieContainer.Add(new Uri("https://localhost/"),new Cookie("CoffeManager.Admin","test-session","/"));
+    try{await connection.LogoutAsync();throw new Exception("Failed logout response accepted");}catch(InvalidOperationException){}
+    if(handler.CookieContainer.GetCookies(new Uri("https://localhost/")).Count!=0)throw new Exception("Session cookie survived failed logout");
+}
+Console.WriteLine("PASS: temporary session cookies cleared after failed logout.");
 Console.WriteLine("PASS: 204, empty 200, null JSON, valid JSON, malformed query and malformed creation response.");
 sealed class Reply(HttpStatusCode status,string body):HttpMessageHandler
 {
@@ -27,3 +35,8 @@ sealed class Reply(HttpStatusCode status,string body):HttpMessageHandler
 }
 
 internal struct CreateRequest{public string Name{get;set;}}
+
+sealed class CookieReply:HttpClientHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken token)=>Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable){Content=new StringContent("{}")});
+}

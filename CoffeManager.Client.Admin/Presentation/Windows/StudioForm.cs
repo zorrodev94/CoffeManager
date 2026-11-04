@@ -32,9 +32,32 @@ internal class StudioForm : Form
             _title.MouseDown+=(_,e)=>{if(e.Button==MouseButtons.Left){ReleaseCapture();SendMessage(Handle,0xA1,(IntPtr)2,IntPtr.Zero);}};
             _title.DoubleClick+=(_,_)=>ToggleMaximize();
             WindowLayout.Configure(this);
+            Shown+=(_,_)=>ApplyChromeScale();DpiChanged+=(_,_)=>BeginInvoke((Action)ApplyChromeScale);
         }
     #endregion Initialization
     #region Window Operations
+        /// <summary>Applies a local caption palette without changing other application windows.</summary>
+        protected void SetCaptionPalette(Color background,Color foreground)
+        {
+            _caption.BackColor=background;_title.BackColor=background;_title.ForeColor=foreground;
+            foreach(Control group in _caption.Controls)
+            {
+                if(group is FlowLayoutPanel)group.BackColor=background;
+                foreach(Control button in group.Controls){button.BackColor=background;button.ForeColor=foreground;}
+            }
+            _caption.Invalidate(true);
+        }
+        /// <summary>Restores caption metrics from logical units after startup or a monitor change.</summary>
+        protected void ApplyChromeScale()
+        {
+            int P(int value)=>(int)Math.Round(value*DeviceDpi/96f);
+            _caption.Height=P(48);_title.Padding=new Padding(P(20),0,0,0);
+            foreach(Control group in _caption.Controls)if(group is FlowLayoutPanel)
+            {
+                group.Width=P(144);group.Height=P(48);
+                foreach(Control button in group.Controls)button.Size=new Size(P(48),P(46));
+            }
+        }
         private void ToggleMaximize(){WindowState=WindowState==FormWindowState.Maximized?FormWindowState.Normal:FormWindowState.Maximized;_caption.Invalidate(true);}
         protected override void OnHandleCreated(EventArgs e)
         {

@@ -9,7 +9,7 @@ internal sealed class AdminForm : StudioForm
     #region Operation Data
         private readonly AdminSession _session;
         private readonly FlowLayoutPanel _content;
-        private readonly FlowLayoutPanel _navigation;
+        private readonly Panel _navigation;
         private readonly TableLayoutPanel _layout;
         private readonly ToolTip _navigationTips=new();
         private readonly List<Image> _pageImages=[];
@@ -19,21 +19,27 @@ internal sealed class AdminForm : StudioForm
     #region Initialization
         internal AdminForm(AdminSession session)
         {
-            _session=session;Text="CoffeManager · Administración";Size=new Size(1280,900);MinimumSize=new Size(850,650);
-            StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",11);AutoScaleDimensions=new SizeF(96F,96F);AutoScaleMode=AutoScaleMode.Dpi;BackColor=MarfilCafe.Ivory;
+            _session=session;Text="CoffeManager · Administración";Size=new Size(1280,820);MinimumSize=new Size(640,480);
+            StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",11);AutoScaleDimensions=new SizeF(96F,96F);AutoScaleMode=AutoScaleMode.None;BackColor=MarfilCafe.Ivory;
             _layout=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1};_layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,235));_layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));_layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-            _navigation=new FlowLayoutPanel{Dock=DockStyle.Fill,BackColor=MarfilCafe.Espresso,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true,Padding=new Padding(16)};
-            var menu=new NavigationButton("Contraer menú","menu");menu.Click+=(_,_)=>ToggleMenu();_navigation.Controls.Add(menu);_navigationTips.SetToolTip(menu,"Mostrar u ocultar nombres del menú");
-            _navigation.Controls.Add(new PictureBox{Image=BrandResources.Logo,SizeMode=PictureBoxSizeMode.Zoom,Size=new Size(110,110)});
-            var brand=MarfilCafe.Text("CoffeManager",18,true);brand.ForeColor=Color.White;_navigation.Controls.Add(brand);
+            _navigation=new Panel{Dock=DockStyle.Fill,BackColor=Obsidian.Surface,AutoScroll=true,Padding=new Padding(12),Margin=Padding.Empty};
+            var menu=new NavigationButton("Menú","menu");menu.SetCompact(true);menu.Click+=(_,_)=>ToggleMenu();_navigation.Controls.Add(menu);_navigationTips.SetToolTip(menu,"Mostrar u ocultar nombres del menú");
+            _navigation.Controls.Add(new NavigationButton("CoffeManager","brand"){Enabled=false,TabStop=false});
             AddNavigation("Inicio",ShowHomeAsync);AddNavigation("Mi perfil",ShowProfileAsync);AddNavigation("Negocio",ShowBusinessAsync);AddNavigation("Sucursales",ShowBranchesAsync);AddNavigation("Empleados",ShowEmployeesAsync);
             AddNavigation("Cerrar sesión",()=>{Close();return Task.CompletedTask;});
             _content=new FlowLayoutPanel{Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true,Padding=new Padding(24)};
             _layout.Controls.Add(_navigation,0,0);_layout.Controls.Add(_content,1,0);Body.Controls.Add(_layout);
-            _content.SizeChanged+=(_,_)=>ResizeContent();
-            Shown+=async(_,_)=>await RunAsync(ShowHomeAsync);
-            DpiChanged+=(_,_)=>ApplyMenuLayout();
-            FormClosed+=(_,_)=>_navigationTips.Dispose();foreach(var image in _pageImages)image.Dispose();
+            Body.SizeChanged+=(_,_)=>ApplyMenuLayout();
+            _content.SizeChanged+=(_,_)=>ResizeContent();_content.ControlAdded+=(_,_)=>ResizeContent();
+            Shown+=async(_,_)=>{ApplyChromeScale();ApplyMenuLayout();await RunAsync(ShowHomeAsync);ResizeContent();};
+            DpiChanged+=(_,_)=>{ApplyChromeScale();ApplyMenuLayout();ResizeContent();};
+            FormClosed+=(_,_)=>{_navigationTips.Dispose();foreach(var image in _pageImages)image.Dispose();};
+        }
+        protected override void OnLoad(EventArgs e)
+        {
+            var area=Screen.FromControl(this).WorkingArea;Size=AccessLayoutMetrics.StartupSize(new Size(1280,820),area.Size,DeviceDpi);
+            MinimumSize=new Size(Math.Min((int)(640*DeviceDpi/96f),area.Width-24),Math.Min((int)(480*DeviceDpi/96f),area.Height-24));
+            Location=new Point(area.Left+(area.Width-Width)/2,area.Top+(area.Height-Height)/2);base.OnLoad(e);
         }
     #endregion Initialization
     #region Navigation Operations
@@ -60,15 +66,35 @@ internal sealed class AdminForm : StudioForm
             var scale=DeviceDpi/96f;_layout.SuspendLayout();_navigation.SuspendLayout();
             try
             {
-                _layout.ColumnStyles[0].Width=(_expanded?235:72)*scale;
-                _navigation.Padding=new Padding((int)((_expanded?16:12)*scale));
+                _layout.ColumnStyles[0].Width=(_expanded?240:76)*scale;
+                _navigation.Padding=new Padding((int)((_expanded?12:10)*scale));
+                int y=(int)(12*scale);
+                _content.Padding=new Padding((int)(24*scale));
                 foreach(Control item in _navigation.Controls)
                 {
-                    if(item is NavigationButton button)button.SetCompact(!_expanded);
-                    else item.Visible=_expanded;
+                    if(item is NavigationButton button)
+                    {
+                        button.SetCompact(!_expanded||button.AccessibleName=="Menú");button.Width=Math.Max(1,(int)((_expanded?240:76)*scale)-_navigation.Padding.Horizontal-2);
+                    }
+                    else
+                    {
+                        item.Visible=_expanded;item.MaximumSize=new Size(Math.Max(1,(int)(235*scale)-_navigation.Padding.Horizontal-2),0);
+                        if(item is Label)
+                        {
+                            item.AutoSize=false;item.Width=Math.Max(1,(int)(235*scale)-_navigation.Padding.Horizontal-2);item.Height=(int)(44*scale);
+                        }
+                        else if(item is PictureBox picture){picture.Width=(int)(92*scale);picture.Height=(int)(92*scale);}
+                    }
+                    if(item.Visible)
+                    {
+                        int itemY=item.AccessibleName=="Cerrar sesión"?Math.Max(y,_navigation.ClientSize.Height-(int)(68*scale)):y;
+                        item.Location=new Point(_navigation.Padding.Left,itemY+_navigation.AutoScrollPosition.Y);
+                        y=itemY+item.Height+(int)(8*scale);
+                    }
                 }
+                _navigation.AutoScrollMinSize=new Size(0,y);
             }
-            finally{_navigation.ResumeLayout(true);_layout.ResumeLayout(true);}
+            finally{_navigation.ResumeLayout(true);_layout.ResumeLayout(true);_navigation.HorizontalScroll.Enabled=false;}
         }
         /// <summary>
         /// Begin page for the current entity operation.
@@ -77,6 +103,7 @@ internal sealed class AdminForm : StudioForm
         /// <param name="description">The description used by this operation.</param>
         private void BeginPage(string title,string description)
         {
+            foreach(Control item in _navigation.Controls)if(item is NavigationButton nav)nav.SelectPage(nav.AccessibleName==title||(title.StartsWith("Buen día")&&nav.AccessibleName=="Inicio"));
             while(_content.Controls.Count>0)_content.Controls[0].Dispose();foreach(var image in _pageImages)image.Dispose();_pageImages.Clear();
             _content.Controls.Add(MarfilCafe.Text(title,26,true));_content.Controls.Add(MarfilCafe.Text(description));
         }
@@ -108,12 +135,13 @@ internal sealed class AdminForm : StudioForm
                 else if(control is Label label)label.MaximumSize=new Size(width,0);
                 else if(control is PictureBox picture&&picture.Width>120)picture.Width=Math.Min(width,650);
                 else if(control is CoverImagePanel)control.Width=width;
+                else if(control is HomeDashboard dashboard){dashboard.Width=width;dashboard.ArrangeDashboard();}
             }
         }
         /// <summary>Displays a consistent summary surface for a saved record or an empty state.</summary>
         private void AddSummaryCard(string title,string description,string? details=null)
         {
-            var card=new FlowLayoutPanel{AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink,FlowDirection=FlowDirection.TopDown,WrapContents=false,BackColor=Color.White,Padding=new Padding(22),Margin=new Padding(0,12,0,16),MinimumSize=new Size(480,0)};
+            var card=new FlowLayoutPanel{AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink,FlowDirection=FlowDirection.TopDown,WrapContents=false,BackColor=Obsidian.Surface,Padding=new Padding(22),Margin=new Padding(0,12,0,16),MinimumSize=new Size(480,0)};
             card.Controls.Add(MarfilCafe.Text(title,19,true));card.Controls.Add(MarfilCafe.Text(description));
             if(!string.IsNullOrWhiteSpace(details))card.Controls.Add(MarfilCafe.Text(details));
             _content.Controls.Add(card);ResizeContent();
@@ -126,10 +154,14 @@ internal sealed class AdminForm : StudioForm
         private async Task ShowHomeAsync()
         {
             var user=await _session.User.GetAsync();var business=await _session.Business.GetAsync();var branches=await _session.Branch.GetAsync();var employees=await _session.Employee.GetEmployeesAsync()??[];
-            BeginPage("Bienvenido, "+(user?.Profile.DisplayName??""),"Tu espacio para organizar el negocio y su equipo.");
-            _content.Controls.Add(new CoverImagePanel{Source=BrandResources.Background,Width=800,Height=210,AccessibleName="Café y repostería"});
-            AddSummaryCard(business?.Profile.TradeName??"Configura tu negocio",$"{branches.Count} sucursales registradas · {employees.Count} empleados registrados");
-            AddAction("Completar mi perfil",ShowProfileAsync);AddAction("Abrir negocio",ShowBusinessAsync);AddAction("Gestionar empleados",ShowEmployeesAsync);AddAction("Gestionar sucursales",ShowBranchesAsync);
+            BeginPage("Buen día, "+(string.IsNullOrWhiteSpace(user?.Profile.DisplayName)?user?.FirstName:user?.Profile.DisplayName),"Tu negocio, en orden.");
+            var dashboard=new HomeDashboard(business?.Profile.TradeName??"Configura tu negocio",branches.Count,employees.Count,user?.IsOwner==true);
+            dashboard.OpenBusiness+=async(_,_)=>await RunAsync(ShowBusinessAsync);
+            dashboard.OpenBranches+=async(_,_)=>await RunAsync(ShowBranchesAsync);
+            dashboard.OpenEmployees+=async(_,_)=>await RunAsync(ShowEmployeesAsync);
+            dashboard.AddEmployee+=async(_,_)=>await RunAsync(async()=>{using var editor=new RecordEditor<EmployeeCreationData>("Agregar empleado",new(),_session.MediaConnection);if(editor.ShowDialog(this)!=DialogResult.OK)return;await _session.Employee.RegisterEmployeeAsync(editor.Data);await ShowHomeAsync();});
+            dashboard.RegisterAccount+=async(_,_)=>await RunAsync(async()=>{using var editor=new StaffAccountForm(_session,employees,branches,await _session.User.GetRolesAsync());if(editor.ShowDialog(this)==DialogResult.OK)await ShowHomeAsync();});
+            _content.Controls.Add(dashboard);ResizeContent();
         }
     #endregion Home Operations
     #region Task Profile Operations
@@ -183,7 +215,7 @@ internal sealed class AdminForm : StudioForm
         {
             var isOwner=(await _session.User.GetAsync())?.IsOwner==true;var employees=await _session.Employee.GetEmployeesAsync()??[];BeginPage("Empleados","Identidad, información laboral y asignación operativa de tu equipo.");
             AddAction("Agregar empleado",async()=>{using var editor=new RecordEditor<EmployeeCreationData>("Agregar empleado",new(),_session.MediaConnection);if(editor.ShowDialog(this)!=DialogResult.OK)return;await _session.Employee.RegisterEmployeeAsync(editor.Data);await ShowEmployeesAsync();});
-            if(isOwner)AddAction("Registrar cuenta de acceso",async()=>{using var editor=new RecordEditor<StaffAccountRegistrationData>("Registrar cuenta de acceso",new(),_session.MediaConnection);editor.AddNote("La cuenta obtiene acceso después de vincularla a un empleado, una sucursal y un rol con permiso.");if(editor.ShowDialog(this)!=DialogResult.OK)return;await _session.User.RegisterStaffAsync(editor.Data);await ShowEmployeesAsync();});
+            if(isOwner)AddAction("Registrar cuenta de acceso",async()=>{using var editor=new StaffAccountForm(_session,employees,await _session.Branch.GetAsync(),await _session.User.GetRolesAsync());if(editor.ShowDialog(this)!=DialogResult.OK)return;await ShowEmployeesAsync();});
             if(isOwner)AddAction("Agregar rol",async()=>{using var editor=new RecordEditor<RoleCreationData>("Agregar rol",new(),_session.MediaConnection);if(editor.ShowDialog(this)!=DialogResult.OK)return;await _session.User.AddRoleAsync(editor.Data);await ShowEmployeesAsync();});
             if(isOwner)AddAction("Agregar periodicidad de salario",()=>AddCatalogAsync("salary-bases","Periodicidad de salario"));if(isOwner)AddAction("Agregar estado laboral",()=>AddCatalogAsync("employment-statuses","Estado laboral"));
             if(employees.Count==0){AddSummaryCard("Tu equipo comienza aquí","Los empleados que no usan el sistema pueden registrarse sin una cuenta.");return;}

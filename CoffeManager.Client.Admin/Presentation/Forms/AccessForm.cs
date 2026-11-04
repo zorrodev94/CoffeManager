@@ -1,96 +1,96 @@
-using CoffeManager.Client.Admin.Presentation.Windows;
 using System.ComponentModel.DataAnnotations;
-using CoffeManager.Client.Admin.Presentation.Controls;
 using CoffeManager.Client.Admin.Connection;
+using CoffeManager.Client.Admin.Presentation.Controls;
 using CoffeManager.Client.Admin.Presentation.Theme;
+using CoffeManager.Client.Admin.Presentation.Windows;
 namespace CoffeManager.Client.Admin.Presentation.Forms;
-internal sealed class AccessForm : StudioForm
+/// <summary>Coordinates persistent one-time activation, login and owner-authorized staff registration.</summary>
+internal sealed class AccessForm : ObsidianAccessForm
 {
     #region Operation Data
         private readonly AdminSession _session;
-        private readonly FlowLayoutPanel _panel;
-        private readonly TextBox _email;
-        private readonly TextBox _password;
-        private readonly Label _status;
+        private readonly ObsidianField _email,_password;
+        private readonly Button _activation,_staff;
+        private readonly Label _errors;
         private bool _busy;
     #endregion Operation Data
     #region Initialization
-        internal AccessForm(AdminSession session)
+        internal AccessForm(AdminSession session):base("Acceso")
         {
-            _session=session;Text="CoffeManager · Acceso";Size=new Size(1200,850);MinimumSize=new Size(800,650);
-            StartPosition=FormStartPosition.CenterScreen;BackColor=MarfilCafe.Ivory;Font=new Font("Segoe UI",11);AutoScaleDimensions=new SizeF(96F,96F);AutoScaleMode=AutoScaleMode.Dpi;
-            var layout=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1};layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,55));layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,45));layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-            _panel=new FlowLayoutPanel{Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true,Padding=new Padding(30)};
-            _panel.Controls.Add(new PictureBox{Image=BrandResources.Logo,SizeMode=PictureBoxSizeMode.Zoom,Size=new Size(100,100)});
-            _panel.Controls.Add(MarfilCafe.Text("CoffeManager",30,true));_panel.Controls.Add(MarfilCafe.Text("Tu negocio, en orden.",16));
-            _panel.Controls.Add(MarfilCafe.Text("Correo electrónico"));_email=MarfilCafe.Input();_email.MaxLength=254;_email.AccessibleName="Correo electrónico";AddInputSurface(_email);
-            _panel.Controls.Add(MarfilCafe.Text("Contraseña"));_password=MarfilCafe.Input();_password.MaxLength=128;_password.UseSystemPasswordChar=true;_password.AccessibleName="Contraseña";AddInputSurface(_password);
-            var login=MarfilCafe.Action("Iniciar sesión",async(_,_)=>await ExecuteAsync(LoginAsync));AcceptButton=login;_panel.Controls.Add(login);
-            _panel.Controls.Add(MarfilCafe.Action("Activar primera cuenta",async(_,_)=>await ExecuteAsync(RegisterAsync),false));
-            _status=MarfilCafe.Text("Accede a tu espacio de administración",10);_panel.Controls.Add(_status);
-            _panel.Resize+=(_,_)=>{var width=Math.Max(200,_panel.ClientSize.Width-_panel.Padding.Horizontal-30);foreach(Control child in _panel.Controls)if(child is StudioSurface)child.Width=width;_status.MaximumSize=new Size(width,0);};
-            layout.Controls.Add(_panel,0,0);layout.Controls.Add(new CoverImagePanel{Dock=DockStyle.Fill,Source=BrandResources.Background,BackColor=MarfilCafe.Espresso},1,0);Body.Controls.Add(layout);
+            _session=session;AddHeading("Tu negocio empieza aquí.","Inicia sesión para continuar en CoffeManager.");
+            _email=AddField("Correo electrónico","ejemplo@correo.com",254);
+            _password=AddField("Contraseña","Ingresa tu contraseña",128,true);
+            _errors=Obsidian.Label(string.Empty,10);_errors.ForeColor=Color.FromArgb(255,174,165);Fields.Controls.Add(_errors);
+            var login=Obsidian.Action("Iniciar sesión",async(_,_)=>await ExecuteAsync(LoginAsync));Fields.Controls.Add(login);AcceptButton=login;
+            _activation=Obsidian.Action("Activar primera cuenta",async(_,_)=>await ExecuteAsync(RegisterAsync),false);_activation.Visible=false;Fields.Controls.Add(_activation);
+            _staff=Obsidian.Action("Crear cuenta de empleado",async(_,_)=>await ExecuteAsync(RegisterStaffAsync),false);_staff.Visible=false;Fields.Controls.Add(_staff);
+            var note=Obsidian.Label("Las nuevas cuentas requieren autorización del propietario.",9);note.ForeColor=Obsidian.Muted;Fields.Controls.Add(note);
+            RetryConnection.LinkClicked+=async(_,_)=>await ExecuteAsync(RefreshSetupAsync);
+            Shown+=async(_,_)=>await ExecuteAsync(RefreshSetupAsync);
         }
     #endregion Initialization
-    #region Field Operations
-        private void AddInputSurface(TextBox input)
-        {
-            var surface=new StudioSurface{Width=420,Height=54,Margin=new Padding(0,0,0,16)};input.Dock=DockStyle.Fill;surface.Controls.Add(input);input.Enter+=(_,_)=>surface.Invalidate();input.Leave+=(_,_)=>surface.Invalidate();_panel.Controls.Add(surface);
-        }
-    #endregion Field Operations
     #region Account Operations
-        /// <summary>
-        /// Authenticates the account and opens its administration workspace.
-        /// </summary>
-        private async Task LoginAsync()
+        private async Task RefreshSetupAsync()
         {
-            await _session.User.LoginAsync(new LoginData{Email=_email.Text.Trim(),Password=_password.Text});_password.Clear();
-            Hide();using var form=new AdminForm(_session);form.ShowDialog(this);Show();
-            try { await _session.User.LogoutAsync(); } catch(HttpRequestException) { } catch(InvalidOperationException) { } catch(TaskCanceledException) { }
-        }
-        /// <summary>
-        /// Collects initial activation credentials and requests creation of the first owner.
-        /// </summary>
-        private async Task RegisterAsync()
-        {
-            using var editor=new EditorForm("Activa tu primera cuenta");var name=editor.AddField("Nombre");name.MaxLength=80;
-            var last=editor.AddField("Primer apellido");last.MaxLength=80;var second=editor.AddField("Segundo apellido (opcional)");second.MaxLength=80;
-            var email=editor.AddField("Correo electrónico");email.MaxLength=254;
-            var password=editor.AddField("Contraseña (12 a 128 caracteres)");password.MaxLength=128;password.UseSystemPasswordChar=true;
-            var confirm=editor.AddField("Confirmar contraseña");confirm.MaxLength=128;confirm.UseSystemPasswordChar=true;
-            var key=editor.AddField("Clave de activación entregada por el proveedor");key.MaxLength=200;key.UseSystemPasswordChar=true;
-            editor.AddNote("Esta operación solo está disponible antes de crear el primer dueño.");
-            editor.ValidateBeforeConfirm(()=>
-            {
-                if(password.Text!=confirm.Text)throw new ValidationException("Las contraseñas no coinciden.");
-                return new AccountRegistrationData{FirstName=name.Text.Trim(),PaternalLastName=last.Text.Trim(),MaternalLastName=Optional(second),Email=email.Text.Trim(),Password=password.Text,SetupKey=key.Text};
-            });
-            if(editor.ShowDialog(this)!=DialogResult.OK)return;
+            _activation.Visible=false;_staff.Visible=false;RetryConnection.Visible=false;
+            ConnectionStatus.Text="Comprobando servidor…";ConnectionStatus.ForeColor=Obsidian.Muted;
             try
             {
-                if(password.Text!=confirm.Text)throw new ValidationException("Las contraseñas no coinciden.");
-                await _session.User.RegisterInitialAsync(new AccountRegistrationData{FirstName=name.Text.Trim(),PaternalLastName=last.Text.Trim(),MaternalLastName=Optional(second),Email=email.Text.Trim(),Password=password.Text,SetupKey=key.Text});
-                _email.Text=email.Text.Trim();MessageBox.Show(this,"Cuenta creada. Ya puedes iniciar sesión.","Registro completado");
+                var required=await _session.User.IsSetupRequiredAsync();_activation.Visible=required;_staff.Visible=!required;
+                ConnectionStatus.ForeColor=Obsidian.Mint;ConnectionStatus.Text="●  Servidor conectado";
             }
-            finally {password.Clear();confirm.Clear();key.Clear();}
+            catch(Exception error)when(error is HttpRequestException or InvalidOperationException or TaskCanceledException)
+            {
+                ConnectionStatus.ForeColor=Color.FromArgb(255,174,165);ConnectionStatus.Text="●  Conexión no disponible";RetryConnection.Visible=true;throw;
+            }
         }
-        /// <summary>
-        /// Executes one asynchronous access operation and displays expected errors.
-        /// </summary>
-        /// <param name="action">The action used by this operation.</param>
+        private async Task LoginAsync()
+        {
+            await _session.User.LoginAsync(new LoginData{Email=_email.Input.Text.Trim(),Password=_password.Input.Text});_password.Input.Clear();
+            Hide();
+            try{using var form=new AdminForm(_session);form.ShowDialog(this);}
+            finally{Show();await CloseSessionAsync();}
+            await RefreshSetupAsync();
+        }
+        private async Task RegisterAsync()
+        {
+            using var editor=new AccountActivationForm(data=>_session.User.RegisterInitialAsync(data));
+            if(editor.ShowDialog(this)==DialogResult.OK)
+            {
+                _email.Input.Text=editor.Data.Email;
+                MessageBox.Show(this,"Cuenta creada. Ya puedes iniciar sesión.","Activación completada",MessageBoxButtons.OK,MessageBoxIcon.Information);
+            }
+            await RefreshSetupAsync();
+        }
+        /// <summary>Uses a temporary owner session for account registration and signs it out when the flow ends.</summary>
+        private async Task RegisterStaffAsync()
+        {
+            try
+            {
+                using var authorization=new OwnerAuthorizationForm(_session);
+                if(authorization.ShowDialog(this)!=DialogResult.OK)return;
+                var employees=await _session.Employee.GetEmployeesAsync()??[];
+                using var editor=new StaffAccountForm(_session,employees,await _session.Branch.GetAsync(),await _session.User.GetRolesAsync());
+                if(editor.ShowDialog(this)==DialogResult.OK)MessageBox.Show(this,"La cuenta se registró correctamente.","Cuenta de empleado",MessageBoxButtons.OK,MessageBoxIcon.Information);
+            }
+            finally{await CloseSessionAsync();}
+            await RefreshSetupAsync();
+        }
+        private async Task CloseSessionAsync()
+        {
+            try{await _session.User.LogoutAsync();}catch(Exception error)when(error is HttpRequestException or InvalidOperationException or TaskCanceledException){ }
+        }
         private async Task ExecuteAsync(Func<Task> action)
         {
-            if(_busy)return;_busy=true;_panel.Enabled=false;_status.Text="Conectando…";
-            try {await action();_status.Text="Listo para iniciar sesión";}
-            catch(Exception error) when(error is HttpRequestException or TaskCanceledException or InvalidOperationException or ValidationException)
-            {_status.Text=error is HttpRequestException?"No se pudo conectar. Revisa API local y certificado HTTPS.":error.Message;}
-            finally{_busy=false;_panel.Enabled=true;}
+            if(_busy)return;_busy=true;Fields.Enabled=false;RetryConnection.Enabled=false;_errors.Text=string.Empty;
+            try{await action();}
+            catch(Exception error)when(error is HttpRequestException or TaskCanceledException or InvalidOperationException or ValidationException)
+            {
+                _errors.Text=error is HttpRequestException or TaskCanceledException?"No se pudo completar la conexión. Revisa que la API esté abierta.":error.Message;
+                if(error is HttpRequestException or TaskCanceledException){ConnectionStatus.Text="●  Conexión no disponible";ConnectionStatus.ForeColor=Color.FromArgb(255,174,165);RetryConnection.Visible=true;}
+                Fields.ScrollControlIntoView(_errors);
+            }
+            finally{_busy=false;if(!IsDisposed){Fields.Enabled=true;RetryConnection.Enabled=true;}}
         }
-        /// <summary>
-        /// Optional for the current entity operation.
-        /// </summary>
-        /// <param name="input">The input used by this operation.</param>
-        /// <returns>The result of the requested operation.</returns>
-        private static string? Optional(TextBox input)=>string.IsNullOrWhiteSpace(input.Text)?null:input.Text.Trim();
     #endregion Account Operations
 }

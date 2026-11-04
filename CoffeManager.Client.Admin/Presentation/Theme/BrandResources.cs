@@ -4,6 +4,8 @@ internal static class BrandResources
 {
     internal static Image Logo { get; }=Load("fox-coffee.png");
     internal static Image Background { get; }=Load("cafe-access.png");
+    internal static Image RefinedBackground { get; }=Load("refined-access.png");
+    internal static Image ObsidianBackground { get; }=Load("obsidian-access.png");
     /// <summary>
     /// Load for the current entity operation.
     /// </summary>

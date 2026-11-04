@@ -1,3 +1,5 @@
+> Entrega actual: lee primero `LEEME_HOME_OBSIDIANA.md`. Las siguientes notas describen revisiones anteriores y sus funciones conservadas.
+
 # Inicio y actualización local
 
 Lee primero `LEEME_CAMBIOS.md`. Esta revisión requiere aplicar la migración 002 antes de usar el cliente. Si ya tienes conexión y Owner, conserva ambos; continúa directamente con la inicialización de esquema y la verificación. No necesitas regenerar la clave de activación.

@@ -3,3 +3,18 @@
 .vs/
 *.user
 *.suo
+
+# Datos privados y archivos locales
+App_Data/Media/
+*.db
+*.bak
+*.pfx
+*.p12
+.env
+.env.*
+appsettings.Local.json
+appsettings.Production.json
+
+# Archivos temporales
+*.tmp
+*.log

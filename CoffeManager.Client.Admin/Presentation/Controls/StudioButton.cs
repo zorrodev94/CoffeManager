@@ -24,10 +24,10 @@ internal sealed class StudioButton : Button
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.Clear(Parent?.BackColor??MarfilCafe.Ivory);e.Graphics.SmoothingMode=SmoothingMode.AntiAlias;
-            var fill=!Enabled?Color.FromArgb(220,213,204):_primary?(_pressed?Color.FromArgb(139,66,22):_hovered?Color.FromArgb(194,108,40):MarfilCafe.Amber):(_hovered?Color.FromArgb(237,228,216):Color.White);
+            var fill=!Enabled?Obsidian.Surface:_primary?(_pressed?Color.FromArgb(112,191,164):_hovered?Color.FromArgb(175,237,214):Obsidian.Mint):(_hovered?Color.FromArgb(37,46,50):Obsidian.Surface);
             using var path=StudioSurface.Outline(new RectangleF(1,1,Width-3,Height-3),10*DeviceDpi/96f);using var brush=new SolidBrush(fill);e.Graphics.FillPath(brush,path);
-            if(!_primary){using var border=new Pen(Color.FromArgb(211,195,177));e.Graphics.DrawPath(border,path);}
-            TextRenderer.DrawText(e.Graphics,Text,Font,ClientRectangle,!Enabled?Color.Gray:_primary?Color.White:MarfilCafe.Espresso,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
+            if(!_primary){using var border=new Pen(Obsidian.Border);e.Graphics.DrawPath(border,path);}
+            TextRenderer.DrawText(e.Graphics,Text,Font,ClientRectangle,!Enabled?Obsidian.Muted:_primary?Obsidian.Background:Obsidian.Text,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
             if(Focused&&ShowFocusCues)ControlPaint.DrawFocusRectangle(e.Graphics,Rectangle.Inflate(ClientRectangle,-6,-6));
         }
     #endregion Drawing Operations

@@ -19,6 +19,7 @@ internal static class ApiEndpoints
     {
         var api=app.MapGroup("/api");
         api.MapGet("/health",()=>Results.Ok(new {status="API disponible"}));
+        api.MapGet("/accounts/setup-required",async(AccountRepository repository,CancellationToken token)=>Results.Ok(await repository.IsSetupRequiredAsync(token))).RequireRateLimiting("setup");
         api.MapPost("/accounts/bootstrap",async (AccountRegistrationData data,Account account,IConfiguration configuration,CancellationToken token)=>
         {
             var key=configuration["Setup:Key"];

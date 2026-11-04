@@ -25,3 +25,13 @@ Las fotos cargadas por usuarios, límites de peso y recorte de avatar/portada pe
 Iconos de navegación, avatar neutro, botones de título, superficies y botones de acción se dibujan localmente con GDI+ y controles WinForms. No requieren imágenes externas ni descargas. Se conservan `fox-coffee.png` y `cafe-access.png`.
 
 Las fotos elegidas por usuarios se normalizan en el cliente y se guardan en el servidor bajo `App_Data/Media` por defecto, fuera del acceso público estático. Puede configurarse `Media:RootPath` en el servidor. Respalda esa carpeta junto con la base SQL. El proyecto excluye App_Data de publicación: al actualizar no reemplaces tu carpeta persistente con una copia vacía.
+
+
+## Acceso Obsidiana · 2026-11-03
+
+`Resources/Brand/obsidian-access.png`: imagen arquitectónica nocturna generada con OpenAI para CoffeManager, sin logotipos ni textos. Se incluye como EmbeddedResource local en el cliente. Los controles y sus etiquetas se dibujan por código; no forman parte del fondo. No requiere servidor de medios ni descarga al iniciar.
+
+
+## Acceso refinado · 2026-11-03
+
+`Resources/Brand/refined-access.png`: fotografía arquitectónica generada con OpenAI para esta revisión, sin textos ni marcas. Recurso local embebido en el cliente. No sustituye el arte en miniatura que conserva Administración.

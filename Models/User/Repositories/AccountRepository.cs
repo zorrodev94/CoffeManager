@@ -7,6 +7,14 @@ namespace CoffeManager.Models.User.Repositories;
 internal sealed partial class AccountRepository(SqlConnectionFactory connections)
 {
     #region Account Operations
+        /// <summary>Reports whether controlled activation is still possible without exposing account details.</summary>
+        internal async Task<bool> IsSetupRequiredAsync(CancellationToken cancellationToken)
+        {
+            await using var connection=await connections.OpenAsync(cancellationToken);using var command=connection.CreateCommand();
+            command.CommandText="SELECT CAST(CASE WHEN EXISTS(SELECT 1 FROM dbo.Accounts) THEN 0 ELSE 1 END AS bit)";
+            return (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
+        }
+
         /// <summary>Creates the only initial owner atomically; setup cannot create a second owner.</summary>
         /// <param name="data">The data used by this operation.</param>
         /// <param name="passwordHash">The password hash used by this operation.</param>

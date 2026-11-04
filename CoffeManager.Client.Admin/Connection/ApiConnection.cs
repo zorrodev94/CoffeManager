@@ -7,6 +7,7 @@ internal sealed class ApiConnection : IDisposable
 {
     #region Operation Data
         private readonly HttpClient _http;
+        private readonly CookieContainer? _cookies;
     #endregion Operation Data
     #region Initialization
         internal ApiConnection(Uri address) : this(address,new HttpClientHandler{CookieContainer=new CookieContainer(),UseCookies=true}) { }
@@ -14,6 +15,7 @@ internal sealed class ApiConnection : IDisposable
         internal ApiConnection(Uri address,HttpMessageHandler transport)
         {
             if(!address.IsAbsoluteUri||address.Scheme!=Uri.UriSchemeHttps)throw new ArgumentException("Configura una API HTTPS válida.");
+            _cookies=(transport as HttpClientHandler)?.CookieContainer;
             _http=new HttpClient(transport){BaseAddress=address,Timeout=TimeSpan.FromSeconds(20),MaxResponseContentBufferSize=4*1024*1024};
             _http.DefaultRequestHeaders.Add("X-CoffeManager-Client","Admin");
         }
@@ -30,7 +32,9 @@ internal sealed class ApiConnection : IDisposable
         }
         internal async Task<Guid> CreateAsync<T>(string route,T data,CancellationToken token=default) where T:struct
         {
-            Validate(data);using var response=await _http.PostAsJsonAsync(route,data,token);await VerifyAsync(response,token);
+            Validate(data);using var response=await _http.PostAsJsonAsync(route,data,token);
+            if(route=="api/accounts/bootstrap"&&response.StatusCode==HttpStatusCode.Unauthorized)throw new InvalidOperationException("La clave de activación no es válida.");
+            await VerifyAsync(response,token);
             return await ReadIdentifierAsync(response,token);
         }
         internal async Task SendAsync<T>(HttpMethod method,string route,T data,CancellationToken token=default) where T:struct
@@ -44,7 +48,8 @@ internal sealed class ApiConnection : IDisposable
         /// <param name="token">The token used by this operation.</param>
         internal async Task LogoutAsync(CancellationToken token=default)
         {
-            using var response=await _http.PostAsync("api/accounts/logout",null,token);await VerifyAsync(response,token);
+            try{using var response=await _http.PostAsync("api/accounts/logout",null,token);await VerifyAsync(response,token);}
+            finally{if(_cookies is not null)foreach(Cookie cookie in _cookies.GetAllCookies())cookie.Expired=true;}
         }
         /// <summary>Uploads a locally normalized image and returns its server-generated media identifier.</summary>
         internal async Task<Guid> UploadImageAsync(byte[] image,CancellationToken token=default)

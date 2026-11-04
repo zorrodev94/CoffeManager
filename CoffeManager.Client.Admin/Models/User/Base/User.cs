@@ -124,7 +124,7 @@ internal abstract class User
             [Display(Name = "Nombre")]
             public string Name { get; set; }
         }
-        /// <summary>Contains a staff account created by the owner before linking it to an employee.</summary>
+        /// <summary>Contains owner-authorized staff credentials and an optional complete employee, branch and role assignment.</summary>
         internal struct StaffAccountRegistrationData
         {
             [Required(ErrorMessage = "{0} es obligatorio."), StringLength(80, ErrorMessage = "{0} debe tener como máximo {1} caracteres.")]
@@ -142,6 +142,12 @@ internal abstract class User
             [Required(ErrorMessage = "{0} es obligatorio."), StringLength(128, MinimumLength = 12, ErrorMessage = "{0} debe tener entre {2} y {1} caracteres.")]
             [Display(Name = "Contraseña")]
             public string Password { get; set; }
+            [Display(Name = "Empleado a vincular")]
+            public Guid? EmployeeId { get; set; }
+            [Display(Name = "Sucursal")]
+            public Guid? BranchId { get; set; }
+            [Display(Name = "Rol")]
+            public Guid? RoleId { get; set; }
         }
         /// <summary>Contains an unlinked staff account eligible for employee assignment; owner accounts are excluded.</summary>
         internal struct AvailableAccountData
@@ -205,6 +211,9 @@ internal abstract class User
         }
     #endregion Structs
     #region Task Account Operations
+        /// <summary>Reads persistent activation availability; no account identity or activation secret is returned.</summary>
+        internal async Task<bool> IsSetupRequiredAsync(CancellationToken cancellationToken=default)=>await Connection.GetAsync<bool>("api/accounts/setup-required",cancellationToken);
+
         /// <summary>Sends the initial owner identity and activation credentials to the server.</summary>
         /// <param name="data">The initial registration fields.</param>
         /// <param name="cancellationToken">Cancels the network request.</param>

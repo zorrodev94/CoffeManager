@@ -29,6 +29,13 @@ foreach(var type in profiles)
 var png=Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=");Assert(MediaEntity.InspectImage(png)=="image/png","PNG rejected");
 foreach(var invalid in new[]{new byte[24],new byte[MediaEntity.MaxImageBytes+1]}){try{MediaEntity.InspectImage(invalid);throw new Exception("Invalid image accepted");}catch(ArgumentException){}}
 Console.WriteLine("PASS image format and size limits");
+var validationRepository=new AccountRepository(new SqlConnectionFactory(new ConfigurationBuilder().Build()));
+for(int mask=1;mask<7;mask++)
+{
+    var incomplete=new StaffAccountRegistrationData{EmployeeId=(mask&1)!=0?Guid.NewGuid():null,BranchId=(mask&2)!=0?Guid.NewGuid():null,RoleId=(mask&4)!=0?Guid.NewGuid():null};
+    try{await validationRepository.CreateStaffAsync(Guid.NewGuid(),incomplete,"unused-test-hash",CancellationToken.None);throw new Exception("Partial assignment accepted");}catch(ArgumentException){}
+}
+Console.WriteLine("PASS: all six incomplete staff assignment combinations rejected before opening SQL.");
 var source=Environment.GetEnvironmentVariable("COFFEMANAGER_TEST_SQL");
 if(string.IsNullOrWhiteSpace(source)){Console.WriteLine("SKIP live SQL: set COFFEMANAGER_TEST_SQL to an instance connection string with CREATE DATABASE permission. No SQL integration was run.");return;}
 var root=Path.GetFullPath(args.FirstOrDefault()??".");Assert(File.Exists(Path.Combine(root,"CoffeManager.csproj")),"Run this test from the solution directory.");
@@ -57,6 +64,11 @@ try
     var staffHash=(await accounts.FindLoginAsync("audit-staff@example.invalid",token))!.Value.Hash;
     await employees.AssignAsync(owner,employee,new(){BranchId=branch,RoleId=noAccess,UserAccountId=staff},token);var after=(await accounts.GetAccessAsync(staff,token))!.Value;Assert(!after.CanAdmin&&!after.CanCheckout&&after.Version>before.Version,"Demotion did not revoke access");Assert((await accounts.FindLoginAsync("audit-staff@example.invalid",token))!.Value.Hash==staffHash,"Demotion changed password");
     var second=await employees.CreateAsync(owner,new(){FirstName="Second",PaternalLastName="Audit"},token);try{await employees.AssignAsync(owner,second,new(){BranchId=branch,RoleId=admin,UserAccountId=staff},token);throw new Exception("Duplicate account assignment accepted");}catch(ArgumentException){}
+    var linkedEmployee=await employees.CreateAsync(owner,new(){FirstName="Linked",PaternalLastName="Audit"},token);
+    var linked=await account.RegisterStaffAsync(owner,new(){FirstName="Linked",PaternalLastName="Audit",Email="linked-staff@example.invalid",Password="Audit-Only-Password-2026",EmployeeId=linkedEmployee,BranchId=branch,RoleId=admin},token);
+    Assert((await accounts.GetAccessAsync(linked,token))!.Value.CanAdmin,"Atomic account assignment failed");
+    try{await account.RegisterStaffAsync(owner,new(){FirstName="Conflict",PaternalLastName="Audit",Email="rollback-staff@example.invalid",Password="Audit-Only-Password-2026",EmployeeId=linkedEmployee,BranchId=branch,RoleId=admin},token);throw new Exception("Already linked employee accepted");}catch(ArgumentException){}
+    Assert(await accounts.FindLoginAsync("rollback-staff@example.invalid",token) is null,"Failed assignment left an account");
     Assert((await employees.GetAsync(Guid.NewGuid(),token)).Count==0,"Cross-owner employee query leaked data");Assert(await branches.CreateAsync(Guid.NewGuid(),new(){BusinessId=business,Name="Forbidden"},token) is null,"Cross-owner branch accepted");
     Console.WriteLine("PASS LIVE SQL: v1 migration, idempotent initialization, complete profile round trips, image ownership, account eligibility, role requirements and demotion with preserved password.");
 }

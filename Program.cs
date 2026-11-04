@@ -38,6 +38,7 @@ builder.Services.AddAuthorization(options=>{options.AddPolicy("Owner",policy=>po
 builder.Services.AddRateLimiter(options=>
 {
     options.RejectionStatusCode=429;
+    options.AddPolicy("setup",context=>RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString()??"local",_=>new FixedWindowRateLimiterOptions{PermitLimit=20,Window=TimeSpan.FromMinutes(1),QueueLimit=0}));
     options.AddPolicy("login",context=>RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString()??"local",_=>new FixedWindowRateLimiterOptions{PermitLimit=5,Window=TimeSpan.FromMinutes(1),QueueLimit=0}));
 });
 var app=builder.Build();

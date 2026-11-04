@@ -141,7 +141,7 @@ internal abstract class User
             [Display(Name = "Nombre")]
             public string Name { get; set; }
         }
-        /// <summary>Contains a staff account created by the owner before linking it to an employee.</summary>
+        /// <summary>Contains owner-authorized staff credentials and an optional complete employee, branch and role assignment.</summary>
         internal struct StaffAccountRegistrationData
         {
             [Required(ErrorMessage = "{0} es obligatorio."), StringLength(80, ErrorMessage = "{0} debe tener como máximo {1} caracteres.")]
@@ -159,6 +159,12 @@ internal abstract class User
             [Required(ErrorMessage = "{0} es obligatorio."), StringLength(128, MinimumLength = 12, ErrorMessage = "{0} debe tener entre {2} y {1} caracteres.")]
             [Display(Name = "Contraseña")]
             public string Password { get; set; }
+            [Display(Name = "Empleado a vincular")]
+            public Guid? EmployeeId { get; set; }
+            [Display(Name = "Sucursal")]
+            public Guid? BranchId { get; set; }
+            [Display(Name = "Rol")]
+            public Guid? RoleId { get; set; }
         }
         /// <summary>Contains an unlinked staff account eligible for employee assignment; owner accounts are excluded.</summary>
         internal struct AvailableAccountData
@@ -235,7 +241,7 @@ internal abstract class User
             if(account is null){_hasher.VerifyHashedPassword(this,DummyHash,data.Password);return null;}
             return _hasher.VerifyHashedPassword(this,account.Value.Hash,data.Password)==PasswordVerificationResult.Failed?null:account.Value.Id;
         }
-        /// <summary>Creates an unlinked staff account without granting operational access.</summary>
+        /// <summary>Creates a staff credential and optionally applies its complete employee assignment in one transaction.</summary>
         /// <param name="ownerId">The owner identifier resolved from the authenticated session.</param>
         /// <param name="data">The interaction fields supplied for this request.</param>
         /// <param name="cancellationToken">Cancels the asynchronous operation.</param>

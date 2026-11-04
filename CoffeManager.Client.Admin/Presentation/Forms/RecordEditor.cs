@@ -41,7 +41,7 @@ internal sealed class RecordEditor<T> : IDisposable where T:struct
                 if(property.Name is "AvatarId" or "LogoId" or "CoverImageId"){AddImage(property,label,(Guid?)value);continue;}
                 if(options?.TryGetValue(property.Name,out var choices)==true)
                 {
-                    var combo=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,FlatStyle=FlatStyle.Flat,BackColor=Color.White,ForeColor=MarfilCafe.Espresso,Font=new Font("Segoe UI",11),AccessibleName=label};
+                    var combo=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,FlatStyle=FlatStyle.Flat,BackColor=Obsidian.Surface,ForeColor=MarfilCafe.Espresso,Font=new Font("Segoe UI",11),AccessibleName=label};
                     foreach(var choice in choices)combo.Items.Add(choice);combo.DisplayMember=nameof(EditorOption.Label);combo.SelectedIndex=choices.ToList().FindIndex(x=>Equals(x.Value,value));if(combo.SelectedIndex<0&&combo.Items.Count>0)combo.SelectedIndex=0;
                     _form.AddEditor(label,combo);_values[property.Name]=()=>((EditorOption?)combo.SelectedItem)?.Value;continue;
                 }
@@ -96,7 +96,7 @@ internal sealed class RecordEditor<T> : IDisposable where T:struct
         };
         private void AddImage(PropertyInfo property,string label,Guid? value)
         {
-            Guid? selected=value;var row=new FlowLayoutPanel{AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink,FlowDirection=FlowDirection.TopDown,WrapContents=false};var preview=new PictureBox{Size=new Size(property.Name=="CoverImageId"?420:110,110),SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.White,AccessibleName=label};row.Controls.Add(preview);
+            Guid? selected=value;var row=new FlowLayoutPanel{AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink,FlowDirection=FlowDirection.TopDown,WrapContents=false};var preview=new PictureBox{Size=new Size(property.Name=="CoverImageId"?420:110,110),SizeMode=PictureBoxSizeMode.Zoom,BackColor=Obsidian.Surface,AccessibleName=label};row.Controls.Add(preview);
             var status=MarfilCafe.Text(value is null?"Sin imagen personalizada":"Imagen configurada",10);row.Controls.Add(status);
             async Task LoadPreview(Guid id)
             {

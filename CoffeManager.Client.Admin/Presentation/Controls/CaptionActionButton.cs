@@ -8,7 +8,7 @@ internal sealed class CaptionActionButton(string action) : Button
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);e.Graphics.SmoothingMode=SmoothingMode.AntiAlias;
-            var scale=DeviceDpi/96f;var x=Width/2f;var y=Height/2f;using var pen=new Pen(MarfilCafe.Espresso,1.4f*scale);
+            var scale=DeviceDpi/96f;var x=Width/2f;var y=Height/2f;using var pen=new Pen(ForeColor,1.4f*scale);
             if(action=="Minimizar")e.Graphics.DrawLine(pen,x-5*scale,y,x+5*scale,y);
             else if(action=="Cerrar"){e.Graphics.DrawLine(pen,x-4*scale,y-4*scale,x+4*scale,y+4*scale);e.Graphics.DrawLine(pen,x+4*scale,y-4*scale,x-4*scale,y+4*scale);}
             else

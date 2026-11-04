@@ -8,6 +8,8 @@ internal sealed class NavigationButton : Button
         private readonly string _caption;
         private readonly string _icon;
         private bool _compact;
+        private bool _selected;
+        internal void SelectPage(bool selected){_selected=selected;Invalidate();}
     #endregion Operation Data
     #region Initialization
         /// <summary>Creates a keyboard-accessible navigation action.</summary>
@@ -16,8 +18,8 @@ internal sealed class NavigationButton : Button
         internal NavigationButton(string caption,string icon)
         {
             _caption=caption;_icon=icon;AccessibleName=caption;FlatStyle=FlatStyle.Flat;
-            FlatAppearance.BorderSize=0;FlatAppearance.MouseOverBackColor=Color.FromArgb(88,60,43);
-            BackColor=MarfilCafe.Espresso;ForeColor=Color.White;Cursor=Cursors.Hand;
+            FlatAppearance.BorderSize=0;FlatAppearance.MouseOverBackColor=Color.FromArgb(37,46,50);
+            BackColor=Obsidian.Surface;ForeColor=Color.White;Cursor=Cursors.Hand;
             Margin=new Padding(0,3,0,3);SetStyle(ControlStyles.OptimizedDoubleBuffer,true);
             SetCompact(false);
         }
@@ -34,11 +36,13 @@ internal sealed class NavigationButton : Button
         /// <param name="e">The graphics surface and invalidated bounds.</param>
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);var g=e.Graphics;g.SmoothingMode=SmoothingMode.AntiAlias;
+            var g=e.Graphics;g.Clear(_selected?Obsidian.Mint:BackColor);g.SmoothingMode=SmoothingMode.AntiAlias;
+            if(Focused){using var focus=new Pen(Obsidian.Mint);g.DrawRectangle(focus,1,1,Width-3,Height-3);}
             var state=g.Save();var scale=DeviceDpi/96f;g.ScaleTransform(scale,scale);g.TranslateTransform(12,12);
-            using var pen=new Pen(Enabled?Color.White:Color.Gray,1.7f){StartCap=LineCap.Round,EndCap=LineCap.Round,LineJoin=LineJoin.Round};
+            using var pen=new Pen(!Enabled?Color.Gray:_selected?Obsidian.Background:Obsidian.Text,1.7f){StartCap=LineCap.Round,EndCap=LineCap.Round,LineJoin=LineJoin.Round};
             switch(_icon)
             {
+                case "brand":g.DrawArc(pen,3,5,16,15,0,180);g.DrawLine(pen,3,12,3,5);g.DrawLine(pen,19,12,19,5);g.DrawLine(pen,3,5,19,5);g.DrawArc(pen,17,5,7,8,270,180);g.DrawBezier(pen,9,2,7,-1,13,-1,12,-4);break;
                 case "menu":g.DrawLine(pen,2,5,22,5);g.DrawLine(pen,2,12,22,12);g.DrawLine(pen,2,19,22,19);break;
                 case "home":g.DrawLines(pen,[new(2,11),new(12,2),new(22,11)]);g.DrawRectangle(pen,5,11,14,11);g.DrawRectangle(pen,10,15,4,7);break;
                 case "person":g.DrawEllipse(pen,8,2,8,8);g.DrawArc(pen,3,12,18,18,180,180);break;
@@ -48,7 +52,7 @@ internal sealed class NavigationButton : Button
                 case "logout":g.DrawLines(pen,[new(10,2),new(3,2),new(3,22),new(10,22)]);g.DrawLine(pen,9,12,22,12);g.DrawLines(pen,[new(17,7),new(22,12),new(17,17)]);break;
             }
             g.Restore(state);
-            if(!_compact)TextRenderer.DrawText(g,_caption,Font,new Rectangle((int)(48*scale),0,Width-(int)(52*scale),Height),ForeColor,TextFormatFlags.VerticalCenter|TextFormatFlags.Left|TextFormatFlags.EndEllipsis);
+            if(!_compact)TextRenderer.DrawText(g,_caption,Font,new Rectangle((int)(48*scale),0,Width-(int)(52*scale),Height),_selected?Obsidian.Background:ForeColor,TextFormatFlags.VerticalCenter|TextFormatFlags.Left|TextFormatFlags.EndEllipsis);
         }
     #endregion Navigation Operations
 }

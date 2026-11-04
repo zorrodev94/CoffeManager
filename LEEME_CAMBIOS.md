@@ -1,3 +1,11 @@
+> Entrega actual: lee primero `LEEME_HOME_OBSIDIANA.md`. Las siguientes notas describen revisiones anteriores y sus funciones conservadas.
+
+> Entrega más reciente: **LEEME_ACCESO_REFINADO.md**. El texto siguiente conserva el alcance de su revisión anterior.
+
+> Revisión más reciente: lee primero **LEEME_RESPONSIVE.md**. Este documento conserva el alcance de la entrega anterior.
+
+> Actualización posterior: consulta primero **LEEME_OBSIDIANA.md** para el acceso oscuro y el estado de activación. El contenido siguiente describe la entrega base.
+
 # CoffeManager — entidades espejo y formularios completos
 
 Esta revisión integra el modelo completo con las operaciones activas. Las estructuras de interacción están dentro de sus entidades y se repiten deliberadamente en cliente y servidor. `Contracts` queda reservado para interfaces. No se añade un proyecto de contratos compartidos.
